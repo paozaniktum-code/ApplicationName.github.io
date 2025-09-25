@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบบันทึกข้อมูลลูกค้า (พร้อมล็อกอิน)</title>
+  <title>ระบบบันทึกข้อมูลลูกค้า — Firebase Realtime</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
@@ -12,47 +12,35 @@
   </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-  <!-- Login Screen -->
+  <!-- ===== Login Screen (Firebase Auth) ===== -->
   <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-white shadow-xl rounded-2xl p-6">
       <div class="text-center mb-6">
         <div class="text-4xl">🔒</div>
         <h1 class="text-2xl font-bold text-gray-800 mt-2">เข้าสู่ระบบ</h1>
-        <p class="text-gray-500 text-sm">กรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าใช้งาน</p>
+        <p class="text-gray-500 text-sm">ใช้บัญชีอีเมล/รหัสผ่านจาก Firebase Console</p>
       </div>
       <form id="loginForm" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label>
-          <input id="loginUsername" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="เช่น admin" required />
+          <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+          <input id="loginUsername" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="you@company.com" required />
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
           <input id="loginPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required />
         </div>
-        <div class="flex items-center justify-between text-xs text-gray-500 pt-1">
-          <span>เวอร์ชัน: 1.0 (Local-Only)</span>
-          <button type="button" id="toggleHelp" class="text-blue-600 hover:underline">วิธีตั้งค่าผู้ใช้</button>
-        </div>
         <button class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow">เข้าสู่ระบบ</button>
       </form>
-      <div id="helpBox" class="hidden mt-4 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <p class="font-semibold text-blue-800">ผู้ใช้เริ่มต้น:</p>
-        <ul class="list-disc ml-5 mt-1">
-          <li><code>admin</code> / <code>admin1234</code></li>
-          <li><code>staff1</code> / <code>fulfill2025</code></li>
-        </ul>
-        <p class="mt-2">คุณสามารถแก้ไขรายชื่อผู้ใช้/รหัสผ่านได้ในตัวแปร <code>USERS</code> ด้านล่าง (เก็บเป็นแฮช SHA-256)</p>
-      </div>
       <p id="loginError" class="hidden mt-4 text-sm text-red-600 text-center"></p>
     </div>
   </div>
 
-  <!-- App Topbar (visible after login) -->
+  <!-- ===== Topbar ===== -->
   <header id="topbar" class="hidden bg-white/80 backdrop-blur sticky top-0 z-40 border-b border-gray-200">
     <div class="container mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">📋</span>
-        <h1 class="text-lg md:text-xl font-semibold text-gray-800">ระบบบันทึกข้อมูลลูกค้า</h1>
+        <h1 class="text-lg md:text-xl font-semibold text-gray-800">ระบบบันทึกข้อมูลลูกค้า (Firebase)</h1>
       </div>
       <div class="flex items-center gap-3">
         <span id="currentUserBadge" class="text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">ผู้ใช้: -</span>
@@ -61,33 +49,31 @@
     </div>
   </header>
 
-  <!-- Main App (your original UI) -->
+  <!-- ===== App Main ===== -->
   <main id="app" class="hidden">
     <div class="container mx-auto px-4 py-8">
-      <!-- Header & Backup Tips -->
+      <!-- Tips -->
       <div class="text-center mb-8">
         <h2 class="text-4xl font-bold text-gray-800 mb-2">📋 ระบบบันทึกข้อมูลลูกค้า</h2>
-        <p class="text-gray-600">จัดการข้อมูลลูกค้าอย่างมีประสิทธิภาพ</p>
-        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl mx-auto">
-          <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 วิธีสำรองข้อมูลเพื่อไม่ให้หาย</h3>
-          <div class="text-xs text-blue-700 space-y-1 text-left">
-            <p><strong>1. ส่งออกไฟล์:</strong> คลิก "💾 ส่งออกข้อมูล" เพื่อดาวน์โหลดไฟล์ .json เก็บไว้ในคอมพิวเตอร์หรือ Google Drive</p>
-            <p><strong>2. อีเมล:</strong> ส่งไฟล์ที่ส่งออกไปยังอีเมลของคุณเป็นการสำรองเพิ่มเติม</p>
-            <p><strong>3. USB/ฮาร์ดไดรฟ์:</strong> คัดลอกไฟล์ไปเก็บใน USB หรือฮาร์ดไดรฟ์ภายนอก</p>
-            <p><strong>4. คลาวด์:</strong> อัปโหลดไฟล์ไปยัง Google Drive, Dropbox, หรือ OneDrive</p>
-            <p class="text-blue-600"><strong>⚠️ สำคัญ:</strong> ข้อมูลจะหายหากลบประวัติเบราว์เซอร์ ควรส่งออกข้อมูลเป็นประจำ</p>
-          </div>
+        <p class="text-gray-600">เรียลไทม์จาก Firebase Firestore + ล็อกอินด้วย Firebase Auth</p>
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl mx-auto text-left">
+          <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 คำแนะนำ</h3>
+          <ul class="list-disc ml-5 text-xs text-blue-700 space-y-1">
+            <li>ข้อมูลซิงก์ข้ามอุปกรณ์แบบเรียลไทม์ (onSnapshot)</li>
+            <li>การเข้าถึงข้อมูลต้องล็อกอิน (ควบคุมด้วย Firestore Rules)</li>
+            <li>ปุ่มส่งออกจะดึงข้อมูลจาก Firestore (ไม่ใช่ localStorage)</li>
+          </ul>
         </div>
       </div>
 
-      <!-- Add Customer Form -->
+      <!-- Form: Add Customer -->
       <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
           <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">+</span>
           เพิ่มข้อมูลลูกค้าใหม่
         </h2>
         <form id="customerForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Basic Info -->
+          <!-- Basic -->
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
@@ -102,7 +88,7 @@
               <input type="tel" id="phone" placeholder="08X-XXX-XXXX" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
             </div>
           </div>
-          <!-- Detailed Info -->
+          <!-- Detail -->
           <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -127,18 +113,18 @@
               <textarea id="specialCare" placeholder="ระบุการดูแลพิเศษที่ต้องการ" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
             </div>
           </div>
-          <!-- Room Interest & Decision -->
+          <!-- Room & Decision -->
           <div class="md:col-span-2 space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-3">สนใจห้อง</label>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องเดี่ยว" class="mr-2"> <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">🏠 ห้องเดี่ยว</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมชาย" class="mr-2"> <span class="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm">👨 ห้องรวมชาย</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมหญิง" class="mr-2"> <span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">👩 ห้องรวมหญิง</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 2 ท่าน" class="mr-2"> <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">👥 ห้องรวม 2 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 3 ท่าน" class="mr-2"> <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👦 ห้องรวม 3 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 5 ท่าน" class="mr-2"> <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องพิเศษ" class="mr-2"> <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">⭐ ห้องพิเศษ</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องเดี่ยว" class="mr-2"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">🏠 ห้องเดี่ยว</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมชาย" class="mr-2"><span class="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm">👨 ห้องรวมชาย</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมหญิง" class="mr-2"><span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">👩 ห้องรวมหญิง</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 2 ท่าน" class="mr-2"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">👥 ห้องรวม 2 ท่าน</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 3 ท่าน" class="mr-2"><span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👦 ห้องรวม 3 ท่าน</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 5 ท่าน" class="mr-2"><span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span></label>
+                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องพิเศษ" class="mr-2"><span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">⭐ ห้องพิเศษ</span></label>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -169,15 +155,14 @@
         </form>
       </div>
 
-      <!-- Customer List -->
+      <!-- Customers Table -->
       <div class="bg-white rounded-xl shadow-lg p-6">
         <div class="flex justify-between items-center mb-6">
           <h2 class="text-2xl font-semibold text-gray-800 flex items-center"><span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">📊</span> รายการลูกค้า</h2>
           <div class="flex items-center gap-4">
             <div class="text-sm text-gray-600">ทั้งหมด: <span id="totalCustomers" class="font-semibold text-blue-600">0</span> คน</div>
             <div class="flex gap-2">
-              <button onclick="exportData()" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm">💾 ส่งออกข้อมูล</button>
-              <button onclick="importData()" class="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2 text-sm">📥 นำเข้าข้อมูล</button>
+              <button onclick="exportFS()" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm">💾 ส่งออกข้อมูล</button>
               <button onclick="printReport()" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm">🖨️ ปริ้นรายงาน</button>
             </div>
           </div>
@@ -214,490 +199,272 @@
     </div>
   </main>
 
-  <script>
-    /***********************************
-     *  AUTH (Client-side Only)
-     ***********************************/
-    // หมายเหตุ: วิธีนี้ใช้ฝั่งหน้าเว็บล้วน ๆ เหมาะกับงานภายใน/ทดสอบ
-    // ถ้าต้องการความปลอดภัยจริง ควรใช้ Firebase Auth/เซิร์ฟเวอร์ หรือ .htaccess
+  <!-- ===== Firebase + App Script (CDN, ES Modules) ===== -->
+  <script type="module">
+    /*************************
+     * ใส่ Firebase Config ของคุณ
+     *************************/
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    // รายชื่อผู้ใช้ (เก็บเป็น SHA-256 ของรหัสผ่าน)
-    const USERS = [
-      { username: 'admin',  passHash: 'ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270', display: 'ผู้ดูแลระบบ' }, // admin1234
-      { username: 'staff1', passHash: 'b5b8a19955f2b632fd5c2df097538535efa6f6842ace43ce0e2a5e1c55a1c39e', display: 'พนักงาน' }      // fulfill2025
-    ];
+    // ===== Imports =====
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, doc, deleteDoc, query, orderBy, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
 
-    const SESSION_KEY = 'customer_app_session_v1';
-    const LOCK_KEY = 'customer_app_lock_until';
-    let idleTimer = null;
-    const IDLE_MINUTES = 10; // ล็อกอัตโนมัติเมื่อไม่ใช้งาน 10 นาที
+    // ===== Init =====
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    document.getElementById('toggleHelp').addEventListener('click', () => {
-      document.getElementById('helpBox').classList.toggle('hidden');
+    // ===== UI refs =====
+    const loginForm = document.getElementById('loginForm');
+    const loginScreen = document.getElementById('loginScreen');
+    const topbar = document.getElementById('topbar');
+    const appMain = document.getElementById('app');
+    const currentUserBadge = document.getElementById('currentUserBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    // ===== Helpers (badges/format) =====
+    window.formatDate = (s) => {
+      const d = new Date(s);
+      if (isNaN(d)) return '-';
+      return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+    };
+    window.formatPrice = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
+    window.getStatusBadge = (status) => ({
+      'ใหม่': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🆕 ใหม่</span>',
+      'หาข้อมูลเปรียบเทียบ': '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">🔍 หาข้อมูลเปรียบเทียบ</span>',
+      'ยังไม่ใช้บริการตอนนี้': '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">⏸️ ยังไม่ใช้บริการตอนนี้</span>',
+      'รอตัดสินใจ': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">⏳ รอตัดสินใจ</span>',
+      'รอทางการแพทย์': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">🏥 รอทางการแพทย์</span>',
+      'รอดูสถานที่': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👀 รอดูสถานที่</span>',
+      'ดูสถานที่แล้วรอตัดสินใจ': '<span class="bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ดูสถานที่แล้วรอตัดสินใจ</span>',
+      'ปิดการขายสำเร็จ': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">✅ ปิดการขายสำเร็จ</span>',
+      'ยกเลิกการขาย': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">❌ ยกเลิกการขาย</span>'
+    }[status] || `<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">${status}</span>`);
+
+    window.getRoomBadge = (roomType) => ({
+      'ห้องเดี่ยว': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ห้องเดี่ยว</span>',
+      'ห้องรวมชาย': '<span class="bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs font-medium">👨 ห้องรวมชาย</span>',
+      'ห้องรวมหญิง': '<span class="bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs font-medium">👩 ห้องรวมหญิง</span>',
+      'ห้องรวม 2 ท่าน': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">👥 ห้องรวม 2 ท่าน</span>',
+      'ห้องรวม 3 ท่าน': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👦 ห้องรวม 3 ท่าน</span>',
+      'ห้องรวม 5 ท่าน': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span>',
+      'ห้องพิเศษ': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">⭐ ห้องพิเศษ</span>'
+    }[roomType] || roomType);
+
+    // ===== Auth =====
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        const box = document.getElementById('loginError');
+        box.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (err?.message || 'Unknown error');
+        box.classList.remove('hidden');
+      }
     });
 
-    async function sha256Hex(text) {
-      const enc = new TextEncoder();
-      const data = enc.encode(text);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    document.getElementById('logoutBtn').addEventListener('click', async () => { await signOut(auth); });
 
-    function getNow() { return Date.now(); }
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUserBadge.textContent = 'ผู้ใช้: ' + (user.email || user.uid);
+        loginScreen.classList.add('hidden');
+        topbar.classList.remove('hidden');
+        appMain.classList.remove('hidden');
+        startRealtime();
+      } else {
+        loginScreen.classList.remove('hidden');
+        topbar.classList.add('hidden');
+        appMain.classList.add('hidden');
+        stopRealtime();
+      }
+    });
 
-    function isLocked() {
-      const until = parseInt(localStorage.getItem(LOCK_KEY) || '0', 10);
-      return getNow() < until;
-    }
+    // ===== Firestore =====
+    const colRef = collection(db, 'customers');
+    let unsubscribe = null;
+    let currentItems = []; // snapshot ล่าสุดสำหรับพิมพ์/ดูรายละเอียด
 
-    function lockFor(ms) {
-      localStorage.setItem(LOCK_KEY, (getNow() + ms).toString());
-    }
-
-    function setSession(username) {
-      const payload = { username, at: new Date().toISOString() };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    }
-
-    function clearSession() {
-      localStorage.removeItem(SESSION_KEY);
-    }
-
-    function getSession() {
-      try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); }
-      catch { return null; }
-    }
-
-    function startIdleTimer() {
-      stopIdleTimer();
-      idleTimer = setTimeout(() => {
-        alert('ไม่มีการใช้งานเป็นเวลา ' + IDLE_MINUTES + ' นาที\nระบบจะล็อกอัตโนมัติ');
-        doLogout();
-      }, IDLE_MINUTES * 60 * 1000);
-    }
-
-    function stopIdleTimer() { if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; } }
-
-    function bindActivityReset() {
-      ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(evt => {
-        window.addEventListener(evt, () => startIdleTimer(), { passive: true });
+    function startRealtime() {
+      const q = query(colRef, orderBy('createdAt', 'desc'));
+      unsubscribe = onSnapshot(q, (snap) => {
+        currentItems = [];
+        snap.forEach(d => currentItems.push({ id: d.id, ...d.data() }));
+        renderCustomersFromFS(currentItems);
       });
     }
+    function stopRealtime(){ if (unsubscribe) unsubscribe(); unsubscribe = null; currentItems = []; }
 
-    async function handleLogin(e) {
-      e.preventDefault();
-      if (isLocked()) {
-        const left = parseInt(localStorage.getItem(LOCK_KEY), 10) - getNow();
-        const sec = Math.ceil(left / 1000);
-        showLoginError('พยายามเข้าสู่ระบบผิดหลายครั้ง โปรดลองใหม่ใน ' + sec + ' วินาที');
-        return;
-      }
-
-      const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const user = USERS.find(u => u.username === username);
-      const passHex = await sha256Hex(password);
-
-      if (!user || user.passHash !== passHex) {
-        // นับจำนวนพลาดในหน่วยความจำชั่วคราว (sessionStorage)
-        const k = 'customer_app_login_fail';
-        const count = parseInt(sessionStorage.getItem(k) || '0', 10) + 1;
-        sessionStorage.setItem(k, String(count));
-        if (count >= 5) {
-          lockFor(60 * 1000); // ล็อก 60 วินาที
-          sessionStorage.removeItem(k);
-          showLoginError('เข้าสู่ระบบผิดเกิน 5 ครั้ง ระบบล็อก 60 วินาที');
-        } else {
-          showLoginError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง (' + count + '/5)');
-        }
-        return;
-      }
-
-      // สำเร็จ
-      sessionStorage.removeItem('customer_app_login_fail');
-      clearLoginError();
-      setSession(user.username);
-      showApp();
-      startIdleTimer();
-    }
-
-    function showLoginError(msg) {
-      const el = document.getElementById('loginError');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-    }
-    function clearLoginError(){
-      const el = document.getElementById('loginError');
-      el.textContent = '';
-      el.classList.add('hidden');
-    }
-
-    function showApp() {
-      const session = getSession();
-      const current = USERS.find(u => u.username === (session?.username || ''));
-      document.getElementById('currentUserBadge').textContent = 'ผู้ใช้: ' + (current?.display || session?.username || '-');
-      document.getElementById('loginScreen').classList.add('hidden');
-      document.getElementById('topbar').classList.remove('hidden');
-      document.getElementById('app').classList.remove('hidden');
-    }
-
-    function showLogin() {
-      document.getElementById('loginScreen').classList.remove('hidden');
-      document.getElementById('topbar').classList.add('hidden');
-      document.getElementById('app').classList.add('hidden');
-      stopIdleTimer();
-    }
-
-    function doLogout() {
-      clearSession();
-      showLogin();
-    }
-
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', doLogout);
-    bindActivityReset();
-
-    // เริ่มต้น: ถ้ามี session ให้เข้าเลย
-    (function initAuth(){
-      const s = getSession();
-      if (s && USERS.some(u => u.username === s.username)) {
-        showApp();
-        startIdleTimer();
-      } else {
-        showLogin();
-      }
-    })();
-
-    /***********************************
-     *  APP (เดิม)
-     ***********************************/
-    let customers = JSON.parse(localStorage.getItem('customers')) || [];
-    let nextId = parseInt(localStorage.getItem('nextId')) || 1;
-
-    // Set today's date as default
-    const dateEl = document.getElementById('date');
-    if (dateEl) dateEl.valueAsDate = new Date();
-
-    function saveToStorage() {
-      localStorage.setItem('customers', JSON.stringify(customers));
-      localStorage.setItem('nextId', nextId.toString());
-    }
-
-    function formatDate(dateString) {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-    function formatPrice(price) { return new Intl.NumberFormat('th-TH').format(price); }
-
-    function getStatusBadge(status) {
-      const badges = {
-        'ใหม่': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🆕 ใหม่</span>',
-        'หาข้อมูลเปรียบเทียบ': '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">🔍 หาข้อมูลเปรียบเทียบ</span>',
-        'ยังไม่ใช้บริการตอนนี้': '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">⏸️ ยังไม่ใช้บริการตอนนี้</span>',
-        'รอตัดสินใจ': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">⏳ รอตัดสินใจ</span>',
-        'รอทางการแพทย์': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">🏥 รอทางการแพทย์</span>',
-        'รอดูสถานที่': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👀 รอดูสถานที่</span>',
-        'ดูสถานที่แล้วรอตัดสินใจ': '<span class="bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ดูสถานที่แล้วรอตัดสินใจ</span>',
-        'ปิดการขายสำเร็จ': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">✅ ปิดการขายสำเร็จ</span>',
-        'ยกเลิกการขาย': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">❌ ยกเลิกการขาย</span>'
-      };
-      return badges[status] || (`<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">${status}</span>`);
-    }
-
-    function getRoomBadge(roomType) {
-      const badges = {
-        'ห้องเดี่ยว': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ห้องเดี่ยว</span>',
-        'ห้องรวมชาย': '<span class="bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs font-medium">👨 ห้องรวมชาย</span>',
-        'ห้องรวมหญิง': '<span class="bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs font-medium">👩 ห้องรวมหญิง</span>',
-        'ห้องรวม 2 ท่าน': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">👥 ห้องรวม 2 ท่าน</span>',
-        'ห้องรวม 3 ท่าน': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👦 ห้องรวม 3 ท่าน</span>',
-        'ห้องรวม 5 ท่าน': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span>',
-        'ห้องพิเศษ': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">⭐ ห้องพิเศษ</span>'
-      };
-      return badges[roomType] || roomType;
-    }
-
-    function renderCustomers() {
-      const tbody = document.getElementById('customerList');
-      const emptyState = document.getElementById('emptyState');
-      const totalCustomers = document.getElementById('totalCustomers');
-      totalCustomers.textContent = customers.length;
-      if (customers.length === 0) {
-        emptyState.style.display = 'table-row';
-        tbody.innerHTML = emptyState.outerHTML; // ensure only one
-        return;
-      }
-      emptyState.style.display = 'none';
-      const rows = customers.map(customer => (
-        `<tr class="hover:bg-gray-50 transition-colors duration-150">
-          <td class="px-4 py-3 text-sm font-medium text-gray-900">${customer.id}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${formatDate(customer.date)}</td>
-          <td class="px-4 py-3 text-sm font-medium text-gray-900">${customer.name}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${customer.phone}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${customer.gender} / ${customer.age} ปี</td>
-          <td class="px-4 py-3 text-sm">${getRoomBadge(customer.roomType)}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">฿${formatPrice(customer.price)}</td>
-          <td class="px-4 py-3 text-sm">${getStatusBadge(customer.decision)}</td>
-          <td class="px-4 py-3 text-sm">
-            <button onclick="viewCustomer(${customer.id})" class="text-blue-600 hover:text-blue-800 mr-2" title="ดูรายละเอียด">👁️</button>
-            <button onclick="editStatus(${customer.id})" class="text-green-600 hover:text-green-800 mr-2" title="แก้ไขสถานะ">✏️</button>
-            <button onclick="deleteCustomer(${customer.id})" class="text-red-600 hover:text-red-800" title="ลบ">🗑️</button>
-          </td>
-        </tr>`
-      )).join('');
-      tbody.innerHTML = rows;
-    }
-
-    function viewCustomer(id) {
-      const customer = customers.find(c => c.id === id);
-      if (!customer) return;
-      const details = `📋 รายละเอียดลูกค้า\n\nลำดับที่: ${customer.id}\nวันที่: ${formatDate(customer.date)}\nชื่อ: ${customer.name}\nเบอร์: ${customer.phone}\nเพศ: ${customer.gender}\nอายุ: ${customer.age} ปี\nโรคประจำตัว: ${customer.disease || 'ไม่มี'}\nการดูแลพิเศษ: ${customer.specialCare || 'ไม่มี'}\nห้องที่สนใจ: ${customer.roomType}\nราคาที่เสนอ: ฿${formatPrice(customer.price)}\nสถานะ: ${customer.decision}`;
-      alert(details);
-    }
-
-    function editStatus(id) {
-      const customer = customers.find(c => c.id === id);
-      if (!customer) return;
-      // Create modal for status selection
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4';
-      modal.innerHTML = `
-        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-          <h3 class="text-lg font-semibold text-gray-800 mb-4">แก้ไขสถานะของ ${customer.name}</h3>
-          <div class="space-y-2 mb-6 max-h-[60vh] overflow-auto pr-1">
-            ${[
-              'ใหม่','หาข้อมูลเปรียบเทียบ','ยังไม่ใช้บริการตอนนี้','รอตัดสินใจ','รอทางการแพทย์','รอดูสถานที่','ดูสถานที่แล้วรอตัดสินใจ','ปิดการขายสำเร็จ','ยกเลิกการขาย'
-            ].map(st => `
-              <label class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
-                <input type="radio" name="newStatus" value="${st}" class="mr-3" ${customer.decision === st ? 'checked' : ''}>
-                ${getStatusBadge(st)}
-              </label>`).join('')}
-          </div>
-          <div class="flex gap-3">
-            <button id="btnUpdateStatus" class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">✅ อัปเดต</button>
-            <button id="btnCancelStatus" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">❌ ยกเลิก</button>
-          </div>
-        </div>`;
-      document.body.appendChild(modal);
-
-      modal.querySelector('#btnCancelStatus').addEventListener('click', () => closeModal());
-      modal.querySelector('#btnUpdateStatus').addEventListener('click', () => updateStatus(id));
-    }
-
-    function updateStatus(id) {
-      const selectedStatus = document.querySelector('input[name="newStatus"]:checked');
-      if (!selectedStatus) { alert('กรุณาเลือกสถานะใหม่'); return; }
-      const customer = customers.find(c => c.id === id);
-      if (customer) {
-        customer.decision = selectedStatus.value;
-        saveToStorage();
-        renderCustomers();
-        closeModal();
-        // Show success message
-        const successMsg = document.createElement('div');
-        successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-        successMsg.textContent = `อัปเดตสถานะของ ${customer.name} เรียบร้อยแล้ว`;
-        document.body.appendChild(successMsg);
-        setTimeout(() => { if (document.body.contains(successMsg)) document.body.removeChild(successMsg); }, 3000);
-      }
-    }
-
-    function closeModal() {
-      const modal = document.querySelector('.fixed.inset-0, .fixed.bg-black\\/50');
-      if (modal) document.body.removeChild(modal);
-    }
-
-    function printReport() {
-      if (customers.length === 0) { alert('ไม่มีข้อมูลลูกค้าให้ปริ้น'); return; }
-      const printWindow = window.open('', '_blank');
-      const reportHTML = `<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>รายงานข้อมูลลูกค้า</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-body { font-family: 'Sarabun', sans-serif; margin: 20px; color: #333; }
-.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-.header h1 { margin: 0; font-size: 24px; font-weight: bold; }
-.header p { margin: 5px 0; color: #666; }
-.summary { display: flex; justify-content: space-between; margin-bottom: 20px; background: #f5f5f5; padding: 15px; border-radius: 8px; }
-.summary-item { text-align: center; }
-.summary-item .number { font-size: 20px; font-weight: bold; color: #2563eb; }
-.summary-item .label { font-size: 12px; color: #666; }
-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-th { background-color: #f8f9fa; font-weight: bold; }
-.status-badge { padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; }
-.status-new { background: #dbeafe; color: #1e40af; }
-.status-research { background: #e0e7ff; color: #3730a3; }
-.status-not-now { background: #f3f4f6; color: #374151; }
-.status-deciding { background: #fef3c7; color: #92400e; }
-.status-medical { background: #f3e8ff; color: #7c2d12; }
-.status-visit { background: #fed7aa; color: #c2410c; }
-.status-visited { background: #ccfbf1; color: #065f46; }
-.status-success { background: #dcfce7; color: #166534; }
-.status-cancelled { background: #fee2e2; color: #dc2626; }
-.footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
-@media print { body { margin: 0; } .no-print { display: none; } }
-</style>
-</head>
-<body>
-  <div class="header">
-    <h1>📋 รายงานข้อมูลลูกค้า</h1>
-    <p>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-  </div>
-  <div class="summary">
-    <div class="summary-item"><div class="number">${customers.length}</div><div class="label">ลูกค้าทั้งหมด</div></div>
-    <div class="summary-item"><div class="number">${customers.filter(c => c.decision === 'ปิดการขายสำเร็จ').length}</div><div class="label">ปิดการขายสำเร็จ</div></div>
-    <div class="summary-item"><div class="number">${customers.filter(c => c.decision === 'รอตัดสินใจ').length}</div><div class="label">รอตัดสินใจ</div></div>
-    <div class="summary-item"><div class="number">${customers.filter(c => c.decision === 'ยกเลิกการขาย').length}</div><div class="label">ยกเลิกการขาย</div></div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>ลำดับ</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์โทร</th><th>เพศ/อายุ</th><th>ห้องที่สนใจ</th><th>ราคา (บาท)</th><th>สถานะ</th><th>โรคประจำตัว</th><th>การดูแลพิเศษ</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${customers.map(customer => `
-        <tr>
-          <td>${customer.id}</td>
-          <td>${formatDate(customer.date)}</td>
-          <td>${customer.name}</td>
-          <td>${customer.phone}</td>
-          <td>${customer.gender} / ${customer.age} ปี</td>
-          <td>${customer.roomType}</td>
-          <td>${formatPrice(customer.price)}</td>
-          <td><span class="status-badge ${getStatusClass(customer.decision)}">${customer.decision}</span></td>
-          <td>${customer.disease || '-'}</td>
-          <td>${customer.specialCare || '-'}</td>
-        </tr>`).join('')}
-    </tbody>
-  </table>
-  <div class="footer">
-    <p>รายงานนี้สร้างโดยระบบบันทึกข้อมูลลูกค้า</p>
-    <p>จำนวนลูกค้าทั้งหมด: ${customers.length} คน</p>
-  </div>
-</body>
-</html>`;
-      printWindow.document.write(reportHTML);
-      printWindow.document.close();
-      printWindow.onload = function() { printWindow.print(); };
-    }
-
-    function getStatusClass(status) {
-      const classes = {
-        'ใหม่': 'status-new',
-        'หาข้อมูลเปรียบเทียบ': 'status-research',
-        'ยังไม่ใช้บริการตอนนี้': 'status-not-now',
-        'รอตัดสินใจ': 'status-deciding',
-        'รอทางการแพทย์': 'status-medical',
-        'รอดูสถานที่': 'status-visit',
-        'ดูสถานที่แล้วรอตัดสินใจ': 'status-visited',
-        'ปิดการขายสำเร็จ': 'status-success',
-        'ยกเลิกการขาย': 'status-cancelled'
-      };
-      return classes[status] || 'status-new';
-    }
-
-    function exportData() {
-      if (customers.length === 0) { alert('ไม่มีข้อมูลให้ส่งออก'); return; }
-      const dataToExport = { customers, nextId, exportDate: new Date().toISOString(), version: '1.0' };
-      const dataStr = JSON.stringify(dataToExport, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(dataBlob);
-      link.download = `customer-data-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      showMessage('ส่งออกข้อมูลสำเร็จ! ไฟล์ถูกดาวน์โหลดแล้ว', 'success');
-    }
-
-    function importData() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try {
-            const importedData = JSON.parse(e.target.result);
-            if (!importedData.customers || !Array.isArray(importedData.customers)) {
-              throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
-            }
-            const confirmMsg = `พบข้อมูลลูกค้า ${importedData.customers.length} คน\nต้องการนำเข้าข้อมูลหรือไม่?\n\n⚠️ ข้อมูลเดิมจะถูกแทนที่`;
-            if (confirm(confirmMsg)) {
-              customers = importedData.customers;
-              nextId = importedData.nextId || (Math.max(...customers.map(c => c.id)) + 1);
-              saveToStorage();
-              renderCustomers();
-              showMessage(`นำเข้าข้อมูลสำเร็จ! ${customers.length} รายการ`, 'success');
-            }
-          } catch (error) {
-            showMessage('เกิดข้อผิดพลาด: ไฟล์ไม่ถูกต้องหรือเสียหาย', 'error');
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
-    }
-
-    function showMessage(message, type = 'info') {
-      const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500' };
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm`;
-      messageDiv.textContent = message;
-      document.body.appendChild(messageDiv);
-      setTimeout(() => { if (document.body.contains(messageDiv)) { document.body.removeChild(messageDiv); } }, 4000);
-    }
-
-    function deleteCustomer(id) {
-      if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) {
-        customers = customers.filter(c => c.id !== id);
-        saveToStorage();
-        renderCustomers();
-      }
-    }
-
-    document.getElementById('customerForm').addEventListener('submit', function(e) {
+    // Add
+    document.getElementById('customerForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const roomType = document.querySelector('input[name="roomType"]:checked')?.value;
       if (!roomType) { alert('กรุณาเลือกประเภทห้องที่สนใจ'); return; }
       const customer = {
-        id: nextId++,
         date: document.getElementById('date').value,
         name: document.getElementById('name').value,
         phone: document.getElementById('phone').value,
         gender: document.getElementById('gender').value,
         age: parseInt(document.getElementById('age').value),
-        disease: document.getElementById('disease').value,
-        specialCare: document.getElementById('specialCare').value,
-        roomType: roomType,
-        price: parseInt(document.getElementById('price').value),
-        decision: document.getElementById('decision').value
+        disease: document.getElementById('disease').value || '',
+        specialCare: document.getElementById('specialCare').value || '',
+        roomType,
+        price: parseInt(document.getElementById('price').value || '0'),
+        decision: document.getElementById('decision').value,
+        createdAt: serverTimestamp()
       };
-      customers.push(customer);
-      saveToStorage();
-      renderCustomers();
-      // Reset form
+      await addDoc(colRef, customer);
       e.target.reset();
-      if (dateEl) dateEl.valueAsDate = new Date();
-      // Button feedback
-      const button = e.target.querySelector('button[type="submit"]');
-      const originalText = button.innerHTML;
-      button.innerHTML = '✅ บันทึกสำเร็จ!';
-      button.classList.add('bg-green-500');
-      setTimeout(() => { button.innerHTML = originalText; button.classList.remove('bg-green-500'); }, 2000);
+      document.getElementById('date').valueAsDate = new Date();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const t = btn.innerHTML; btn.innerHTML = '✅ บันทึกสำเร็จ!'; btn.classList.add('bg-green-500');
+      setTimeout(()=>{ btn.innerHTML=t; btn.classList.remove('bg-green-500'); },1500);
     });
 
-    // Initial render
-    renderCustomers();
+    // Update status / Delete
+    async function updateCustomerStatus(id, newStatus){ await updateDoc(doc(db,'customers',id), { decision: newStatus }); }
+    async function removeCustomer(id){ await deleteDoc(doc(db,'customers',id)); }
+
+    // Render table
+    function renderCustomersFromFS(items){
+      const tbody = document.getElementById('customerList');
+      const totalCustomers = document.getElementById('totalCustomers');
+      totalCustomers.textContent = items.length;
+      if (!items.length){
+        tbody.innerHTML = document.getElementById('emptyState').outerHTML;
+        return;
+      }
+      const rows = items.map((c, idx) => `
+        <tr class="hover:bg-gray-50 transition-colors duration-150">
+          <td class="px-4 py-3 text-sm font-medium text-gray-900">${idx + 1}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${formatDate(c.date)}</td>
+          <td class="px-4 py-3 text-sm font-medium text-gray-900">${c.name}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${c.phone}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">${c.gender} / ${c.age} ปี</td>
+          <td class="px-4 py-3 text-sm">${getRoomBadge(c.roomType)}</td>
+          <td class="px-4 py-3 text-sm text-gray-700">฿${formatPrice(c.price || 0)}</td>
+          <td class="px-4 py-3 text-sm">${getStatusBadge(c.decision)}</td>
+          <td class="px-4 py-3 text-sm">
+            <button onclick="viewCustomerFS('${c.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="ดูรายละเอียด">👁️</button>
+            <button onclick="editStatusFS('${c.id}','${c.decision || ''}')" class="text-green-600 hover:text-green-800 mr-2" title="แก้ไขสถานะ">✏️</button>
+            <button onclick="deleteFS('${c.id}')}" class="text-red-600 hover:text-red-800" title="ลบ">🗑️</button>
+          </td>
+        </tr>`).join('');
+      tbody.innerHTML = rows;
+    }
+
+    // Actions (attach to window)
+    window.viewCustomerFS = (id) => {
+      const c = currentItems.find(v => v.id === id);
+      if(!c) return;
+      const details = `📋 รายละเอียดลูกค้า\n\nวันที่: ${formatDate(c.date)}\nชื่อ: ${c.name}\nเบอร์: ${c.phone}\nเพศ: ${c.gender}\nอายุ: ${c.age} ปี\nโรคประจำตัว: ${c.disease || 'ไม่มี'}\nการดูแลพิเศษ: ${c.specialCare || 'ไม่มี'}\nห้องที่สนใจ: ${c.roomType}\nราคา: ฿${formatPrice(c.price || 0)}\nสถานะ: ${c.decision}`;
+      alert(details);
+    };
+    window.editStatusFS = async (id, currentStatus) => {
+      const newStatus = prompt('แก้ไขสถานะ', currentStatus || 'รอตัดสินใจ');
+      if (newStatus) await updateCustomerStatus(id, newStatus);
+    };
+    window.deleteFS = async (id) => {
+      if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) await removeCustomer(id);
+    };
+
+    // Export (Firestore → JSON)
+    window.exportFS = async () => {
+      const snap = await getDocs(query(colRef, orderBy('createdAt','desc')));
+      const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+      const data = JSON.stringify({ customers: arr, exportedAt: new Date().toISOString() }, null, 2);
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      link.download = `customers-fs-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+    };
+
+    // Print report (ใช้ currentItems ล่าสุด)
+    window.printReport = () => {
+      if (!currentItems.length) { alert('ไม่มีข้อมูลลูกค้าให้ปริ้น'); return; }
+      const printWindow = window.open('', '_blank');
+      const reportHTML = `<!DOCTYPE html>
+<html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>รายงานข้อมูลลูกค้า</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}.header{text-align:center;margin-bottom:30px;border-bottom:2px solid #333;padding-bottom:20px}.header h1{margin:0;font-size:24px;font-weight:700}.summary{display:flex;justify-content:space-between;margin-bottom:20px;background:#f5f5f5;padding:15px;border-radius:8px}.summary-item{text-align:center}.summary-item .number{font-size:20px;font-weight:700;color:#2563eb}.summary-item .label{font-size:12px;color:#666}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f8f9fa;font-weight:700}.status-badge{padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700}.footer{margin-top:30px;text-align:center;font-size:12px;color:#666;border-top:1px solid #ddd;padding-top:15px}@media print{body{margin:0}.no-print{display:none}}</style></head>
+<body>
+  <div class="header">
+    <h1>📋 รายงานข้อมูลลูกค้า</h1>
+    <p>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'})}</p>
+  </div>
+  <div class="summary">
+    <div class="summary-item"><div class="number">${currentItems.length}</div><div class="label">ลูกค้าทั้งหมด</div></div>
+    <div class="summary-item"><div class="number">${currentItems.filter(c => c.decision==='ปิดการขายสำเร็จ').length}</div><div class="label">ปิดการขายสำเร็จ</div></div>
+    <div class="summary-item"><div class="number">${currentItems.filter(c => c.decision==='รอตัดสินใจ').length}</div><div class="label">รอตัดสินใจ</div></div>
+    <div class="summary-item"><div class="number">${currentItems.filter(c => c.decision==='ยกเลิกการขาย').length}</div><div class="label">ยกเลิกการขาย</div></div>
+  </div>
+  <table>
+    <thead><tr><th>ลำดับ</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์โทร</th><th>เพศ/อายุ</th><th>ห้องที่สนใจ</th><th>ราคา (บาท)</th><th>สถานะ</th><th>โรคประจำตัว</th><th>การดูแลพิเศษ</th></tr></thead>
+    <tbody>
+      ${currentItems.map((c,i)=>`<tr>
+        <td>${i+1}</td>
+        <td>${formatDate(c.date)}</td>
+        <td>${c.name}</td>
+        <td>${c.phone}</td>
+        <td>${c.gender} / ${c.age} ปี</td>
+        <td>${c.roomType}</td>
+        <td>${formatPrice(c.price||0)}</td>
+        <td>${c.decision}</td>
+        <td>${c.disease||'-'}</td>
+        <td>${c.specialCare||'-'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <div class="footer">
+    <p>รายงานนี้สร้างโดยระบบบันทึกข้อมูลลูกค้า (Firebase)</p>
+    <p>จำนวนลูกค้าทั้งหมด: ${currentItems.length} คน</p>
+  </div>
+</body></html>`;
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+      printWindow.onload = function(){ printWindow.print(); };
+    };
+
+    // ===== (ทางเลือก) Migrate localStorage → Firestore (ครั้งเดียว) =====
+    window.migrateLocalToFirestore = async () => {
+      const raw = localStorage.getItem('customers');
+      const customersLocal = raw ? JSON.parse(raw) : [];
+      if (!customersLocal.length) { alert('ไม่พบข้อมูลในเครื่องนี้'); return; }
+      const batch = writeBatch(db);
+      const now = new Date();
+      customersLocal.forEach(c => {
+        const ref = doc(collection(db,'customers'));
+        batch.set(ref, {
+          date: c.date,
+          name: c.name,
+          phone: c.phone,
+          gender: c.gender,
+          age: Number(c.age||0),
+          disease: c.disease || '',
+          specialCare: c.specialCare || '',
+          roomType: c.roomType,
+          price: Number(c.price||0),
+          decision: c.decision,
+          createdAt: now
+        });
+      });
+      await batch.commit();
+      alert(`ย้ายข้อมูลสำเร็จ: ${customersLocal.length} รายการ`);
+    };
+
+    // ตั้งค่า default date
+    const dateEl = document.getElementById('date');
+    if (dateEl) dateEl.valueAsDate = new Date();
   </script>
 </body>
 </html>
-
