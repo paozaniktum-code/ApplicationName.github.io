@@ -21,6 +21,18 @@
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-gray-800 mb-2">📋 ระบบบันทึกข้อมูลลูกค้า</h1>
             <p class="text-gray-600">จัดการข้อมูลลูกค้าอย่างมีประสิทธิภาพ</p>
+            
+            <!-- Data Backup Info -->
+            <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl mx-auto">
+                <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 วิธีสำรองข้อมูลเพื่อไม่ให้หาย</h3>
+                <div class="text-xs text-blue-700 space-y-1">
+                    <p><strong>1. ส่งออกไฟล์:</strong> คลิก "💾 ส่งออกข้อมูล" เพื่อดาวน์โหลดไฟล์ .json เก็บไว้ในคอมพิวเตอร์หรือ Google Drive</p>
+                    <p><strong>2. อีเมล:</strong> ส่งไฟล์ที่ส่งออกไปยังอีเมลของคุณเป็นการสำรองเพิ่มเติม</p>
+                    <p><strong>3. USB/ฮาร์ดไดรฟ์:</strong> คัดลอกไฟล์ไปเก็บใน USB หรือฮาร์ดไดรฟ์ภายนอก</p>
+                    <p><strong>4. คลาวด์:</strong> อัปโหลดไฟล์ไปยัง Google Drive, Dropbox, หรือ OneDrive</p>
+                    <p class="text-blue-600"><strong>⚠️ สำคัญ:</strong> ข้อมูลจะหายหากลบประวัติเบราว์เซอร์ ควรส่งออกข้อมูลเป็นประจำ</p>
+                </div>
+            </div>
         </div>
 
         <!-- Add Customer Form -->
@@ -157,9 +169,17 @@
                     <div class="text-sm text-gray-600">
                         ทั้งหมด: <span id="totalCustomers" class="font-semibold text-blue-600">0</span> คน
                     </div>
-                    <button onclick="printReport()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm">
-                        🖨️ ปริ้นรายงาน
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportData()" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm">
+                            💾 ส่งออกข้อมูล
+                        </button>
+                        <button onclick="importData()" class="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2 text-sm">
+                            📥 นำเข้าข้อมูล
+                        </button>
+                        <button onclick="printReport()" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm">
+                            🖨️ ปริ้นรายงาน
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -599,6 +619,92 @@
             return classes[status] || 'status-new';
         }
 
+        function exportData() {
+            if (customers.length === 0) {
+                alert('ไม่มีข้อมูลให้ส่งออก');
+                return;
+            }
+
+            const dataToExport = {
+                customers: customers,
+                nextId: nextId,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `customer-data-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            // Show success message
+            showMessage('ส่งออกข้อมูลสำเร็จ! ไฟล์ถูกดาวน์โหลดแล้ว', 'success');
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        
+                        // Validate data structure
+                        if (!importedData.customers || !Array.isArray(importedData.customers)) {
+                            throw new Error('รูปแบบไฟล์ไม่ถูกต้อง');
+                        }
+                        
+                        // Confirm import
+                        const confirmMsg = `พบข้อมูลลูกค้า ${importedData.customers.length} คน\nต้องการนำเข้าข้อมูลหรือไม่?\n\n⚠️ ข้อมูลเดิมจะถูกแทนที่`;
+                        
+                        if (confirm(confirmMsg)) {
+                            customers = importedData.customers;
+                            nextId = importedData.nextId || (Math.max(...customers.map(c => c.id)) + 1);
+                            
+                            saveToStorage();
+                            renderCustomers();
+                            showMessage(`นำเข้าข้อมูลสำเร็จ! ${customers.length} รายการ`, 'success');
+                        }
+                        
+                    } catch (error) {
+                        showMessage('เกิดข้อผิดพลาด: ไฟล์ไม่ถูกต้องหรือเสียหาย', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        function showMessage(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(messageDiv)) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 4000);
+        }
+
         function deleteCustomer(id) {
             if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) {
                 customers = customers.filter(c => c.id !== id);
@@ -655,5 +761,5 @@
         // Initial render
         renderCustomers();
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984b6b35129d81a7',t:'MTc1ODgxMjcxNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'984b71b9d547a8ee',t:'MTc1ODgxMjk4My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
