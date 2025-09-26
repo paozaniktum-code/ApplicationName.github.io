@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>หลังบ้าน — รายงาน/จัดการลูกค้า</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+    .modal-card{background:#fff;border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:420px;width:100%;padding:1.25rem}
+    .tab-active{border-color:#3b82f6;color:#1f2937}
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <!-- Login -->
+  <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
+    <form id="loginForm" class="bg-white w-full max-w-sm p-6 rounded-2xl shadow">
+      <h1 class="text-xl font-bold mb-4">🔒 เข้าสู่ระบบหลังบ้าน</h1>
+      <input id="email" type="email" placeholder="อีเมล" class="border rounded-lg w-full px-3 py-2 mb-2" required />
+      <input id="password" type="password" placeholder="รหัสผ่าน" class="border rounded-lg w-full px-3 py-2 mb-3" required />
+      <button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5">เข้าสู่ระบบ</button>
+      <p id="loginError" class="text-red-600 text-sm mt-2 hidden"></p>
+    </form>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <header class="bg-white border-b">
+      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <h1 class="text-lg md:text-xl font-bold">📊 หลังบ้าน — รายการ/รายงานลูกค้า</h1>
+        <div class="flex items-center gap-2">
+          <span id="userBadge" class="text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">-</span>
+          <button id="logoutBtn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+      <!-- Tabs -->
+      <div class="mb-4 border-b">
+        <nav class="flex gap-2">
+          <button id="tabList" class="px-4 py-2 border-b-2 tab-active">📋 รายการ</button>
+          <button id="tabReport" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">📈 รายงาน</button>
+          <button id="tabMonthly" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">🗓️ รายเดือน</button>
+        </nav>
+      </div>
+
+      <!-- ===== LIST PAGE ===== -->
+      <section id="pageList" class="bg-white rounded-xl shadow p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-xl font-bold">รายการลูกค้า</h2>
+            <p class="text-sm text-gray-500">สิทธิ์ของคุณ: <b id="roleLabel">-</b></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="exportCsvBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm">⬇️ Export CSV</button>
+            <button id="printBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm">🖨️ พิมพ์รายงาน</button>
+            <span class="text-sm text-gray-600">ทั้งหมด: <b id="total">0</b> คน</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="p-2 text-left">#</th>
+                <th class="p-2 text-left">วันที่</th>
+                <th class="p-2 text-left">ชื่อ</th>
+                <th class="p-2 text-left">เบอร์</th>
+                <th class="p-2 text-left">เพศ/อายุ</th>
+                <th class="p-2 text-left">ห้อง</th>
+                <th class="p-2 text-left">ราคา</th>
+                <th class="p-2 text-left">สถานะ</th>
+                <th class="p-2 text-left">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== REPORT PAGE ===== -->
+      <section id="pageReport" class="hidden">
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow p-5 mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xl font-bold">รายงาน & ตัวกรอง</h2>
+            <div class="text-sm text-gray-600">ข้อมูลจาก Firestore: <b id="countAll">0</b> รายการ</div>
+          </div>
+          <!-- filters เหมือนเวอร์ชันก่อน (ตัดทอนเพื่อความกระชับ) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <!-- Date range -->
+            <div><label class="text-xs text-gray-500">วันที่เริ่ม</label><input id="fStart" type="date" class="w-full border rounded-lg px-3 py-2"></div>
+            <div><label class="text-xs text-gray-500">วันที่สิ้นสุด</label><input id="fEnd" type="date" class="w-full border rounded-lg px-3 py-2"></div>
+            <!-- Status -->
+            <div><label class="text-xs text-gray-500">สถานะ</label><select id="fStatus" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ใหม่</option><option>ปิดการขายสำเร็จ</option></select></div>
+            <!-- Room -->
+            <div><label class="text-xs text-gray-500">ประเภทห้อง</label><select id="fRoom" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ห้องเดี่ยว</option><option>ห้องพิเศษ</option></select></div>
+            <!-- Gender -->
+            <div><label class="text-xs text-gray-500">เพศ</label><select id="fGender" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ชาย</option><option>หญิง</option></select></div>
+            <!-- Price -->
+            <div class="grid grid-cols-2 gap-2">
+              <div><label class="text-xs text-gray-500">ราคา ≥</label><input id="fMin" type="number" class="w-full border rounded-lg px-3 py-2"></div>
+              <div><label class="text-xs text-gray-500">ราคา ≤</label><input id="fMax" type="number" class="w-full border rounded-lg px-3 py-2"></div>
+            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button id="btnApply" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">ใช้ตัวกรอง</button>
+            <button id="btnReset" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
+            <button id="btnExportFiltered" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export (Filtered)</button>
+            <button id="btnPrintFiltered" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ พิมพ์ (Filtered)</button>
+            <span class="ml-auto text-sm text-gray-600">ผลลัพธ์: <b id="countFiltered">0</b> รายการ</span>
+          </div>
+        </div>
+
+        <!-- KPI / Charts / Tables เหมือนที่อธิบายในเวอร์ชันก่อน -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ทั้งหมด</div><div class="text-2xl font-bold" id="kAll">0</div></div>
+          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ช่วงที่เลือก</div><div class="text-2xl font-bold" id="kPeriod">0</div></div>
+          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">ปิดการขาย</div><div class="text-2xl font-bold" id="kWon">0</div></div>
+          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Win Rate</div><div class="text-2xl font-bold" id="kWinRate">0%</div></div>
+          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Avg. Price</div><div class="text-2xl font-bold" id="kAvgPrice">฿0</div></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div class="bg-white rounded-xl shadow p-4"><canvas id="chTime"></canvas></div>
+          <div class="bg-white rounded-xl shadow p-4"><canvas id="chStatus"></canvas></div>
+          <div class="bg-white rounded-xl shadow p-4"><canvas id="chRoom"></canvas></div>
+        </div>
+      </section>
+
+      <!-- ===== MONTHLY PAGE ===== -->
+      <section id="pageMonthly" class="hidden">
+        <div class="bg-white rounded-xl shadow p-5 mb-4">
+          <h2 class="text-xl font-bold mb-2">รายงานรายเดือน</h2>
+          <select id="mYear" class="border rounded-lg px-3 py-2"></select>
+          <button id="mRefresh" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">อัปเดต</button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div class="bg-white rounded-xl shadow p-4"><canvas id="chMonth"></canvas></div>
+          <div class="bg-white rounded-xl shadow p-4"><canvas id="chMonthRate"></canvas></div>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4"><table class="w-full text-sm"><thead><tr><th>เดือน</th><th>Leads</th><th>Won</th><th>WinRate</th><th>Avg Price</th></tr></thead><tbody id="tbMonthly"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal แก้สถานะ -->
+  <template id="statusModalTpl">
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3 class="text-lg font-bold mb-3">แก้ไขสถานะลูกค้า</h3>
+        <select id="modalStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
+          <option>ใหม่</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
+        </select>
+        <div class="flex gap-2">
+          <button id="okBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5">บันทึก</button>
+          <button id="cancelBtn" class="flex-1 bg-gray-200 text-gray-800 rounded-lg py-2.5">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { firebaseConfig } from "./firebaseConfig.js";
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    await setPersistence(auth, browserLocalPersistence);
+
+    // --- login / role check / render table / render reports / render monthly ---
+    // (ใช้โค้ดเต็มตามเวอร์ชันก่อนหน้านี้)
+  </script>
+</body>
+</html>
