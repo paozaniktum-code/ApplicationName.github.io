@@ -5,111 +5,164 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>หน้าบ้าน — ระบบลูกค้า (Public)</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-  <div class="container mx-auto px-4 py-8">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">📋 เพิ่มข้อมูลลูกค้า (สาธารณะ)</h1>
-      <a href="./admin-report-enhanced.html" class="text-blue-600 hover:underline">เข้า “หลังบ้าน”</a>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+  <header class="bg-white/80 backdrop-blur sticky top-0 z-40 border-b border-gray-200">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">📋</span>
+        <h1 class="text-lg md:text-xl font-semibold text-gray-800">หน้าบ้าน — เพิ่ม/ดูลูกค้า (สาธารณะ)</h1>
+      </div>
+      <a href="./admin-report-enhanced.html" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">ไปหลังบ้าน ➜</a>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Tips -->
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-gray-800 mb-2">เพิ่มข้อมูลลูกค้า</h2>
+      <p class="text-gray-600">ข้อมูลถูกเก็บใน Firestore แบบเรียลไทม์ (ไม่ต้องล็อกอิน)</p>
+      <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl mx-auto text-left">
+        <ul class="list-disc ml-5 text-xs text-blue-700 space-y-1">
+          <li>อ่าน/เพิ่มได้แบบสาธารณะ (ขึ้นกับ Firestore Rules)</li>
+          <li>แก้ไข/ลบ — ให้ทำใน “หลังบ้าน” เท่านั้น (ต้องมี role)</li>
+        </ul>
+      </div>
     </div>
 
-    <!-- ฟอร์มเพิ่มลูกค้า -->
-    <form id="customerForm" class="bg-white p-5 rounded-xl shadow mb-8 grid md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">วันที่</label>
-        <input id="date" type="date" class="w-full border rounded-lg px-3 py-2" required />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">ชื่อ</label>
-        <input id="name" type="text" placeholder="ชื่อลูกค้า" class="w-full border rounded-lg px-3 py-2" required />
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">เบอร์โทร</label>
-        <input id="phone" type="tel" placeholder="08X-XXX-XXXX" class="w-full border rounded-lg px-3 py-2" required />
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">เพศ</label>
-          <select id="gender" class="w-full border rounded-lg px-3 py-2" required>
-            <option value="">เลือก</option>
-            <option>ชาย</option><option>หญิง</option>
-          </select>
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <h3 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+        <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">+</span>
+        ฟอร์มเพิ่มลูกค้า
+      </h3>
+      <form id="customerForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
+            <input type="date" id="date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ</label>
+            <input type="text" id="name" placeholder="ชื่อลูกค้า" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์</label>
+            <input type="tel" id="phone" placeholder="08X-XXX-XXXX" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required/>
+          </div>
         </div>
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">อายุ</label>
-          <input id="age" type="number" min="1" max="120" class="w-full border rounded-lg px-3 py-2" required />
-        </div>
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">โรคประจำตัว</label>
-        <input id="disease" type="text" placeholder="ถ้ามี" class="w-full border rounded-lg px-3 py-2" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">การดูแลพิเศษ</label>
-        <textarea id="specialCare" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="เช่น ดูแลเรื่องอาหาร/แพ้ยา ฯลฯ"></textarea>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">ห้องที่สนใจ</label>
-        <select id="roomType" class="w-full border rounded-lg px-3 py-2" required>
-          <option value="">เลือก</option>
-          <option>ห้องเดี่ยว</option>
-          <option>ห้องรวมชาย</option>
-          <option>ห้องรวมหญิง</option>
-          <option>ห้องรวม 2 ท่าน</option>
-          <option>ห้องรวม 3 ท่าน</option>
-          <option>ห้องรวม 5 ท่าน</option>
-          <option>ห้องพิเศษ</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm text-gray-600 mb-1">ราคาที่เสนอ (บาท)</label>
-        <input id="price" type="number" min="0" class="w-full border rounded-lg px-3 py-2" required />
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-sm text-gray-600 mb-1">สถานะ</label>
-        <select id="decision" class="w-full border rounded-lg px-3 py-2" required>
-          <option value="">เลือก</option>
-          <option>ใหม่</option>
-          <option>หาข้อมูลเปรียบเทียบ</option>
-          <option>ยังไม่ใช้บริการตอนนี้</option>
-          <option>รอตัดสินใจ</option>
-          <option>รอทางการแพทย์</option>
-          <option>รอดูสถานที่</option>
-          <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-          <option>ปิดการขายสำเร็จ</option>
-          <option>ยกเลิกการขาย</option>
-        </select>
-      </div>
-      <div class="md:col-span-2">
-        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3">💾 บันทึกข้อมูลลูกค้า</button>
-      </div>
-    </form>
 
-    <!-- ตารางลูกค้า -->
-    <div class="bg-white rounded-xl shadow p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold">รายการลูกค้า</h2>
-        <span class="text-sm text-gray-600">ทั้งหมด: <b id="total">0</b> คน</span>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
+              <select id="gender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                <option value="">เลือก</option>
+                <option value="ชาย">ชาย</option>
+                <option value="หญิง">หญิง</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">อายุ</label>
+              <input type="number" id="age" min="1" max="120" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required/>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">โรคประจำตัว</label>
+            <input type="text" id="disease" placeholder="ถ้ามี" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">การดูแลพิเศษ</label>
+            <textarea id="specialCare" rows="2" placeholder="ระบุรายละเอียด" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ห้องที่สนใจ</label>
+            <select id="roomType" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              <option value="">เลือก</option>
+              <option>ห้องเดี่ยว</option>
+              <option>ห้องรวมชาย</option>
+              <option>ห้องรวมหญิง</option>
+              <option>ห้องรวม 2 ท่าน</option>
+              <option>ห้องรวม 3 ท่าน</option>
+              <option>ห้องรวม 5 ท่าน</option>
+              <option>ห้องพิเศษ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ราคาที่เสนอ (บาท)</label>
+            <input type="number" id="price" min="0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required/>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
+            <select id="decision" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+              <option value="">เลือก</option>
+              <option>ใหม่</option>
+              <option>หาข้อมูลเปรียบเทียบ</option>
+              <option>ยังไม่ใช้บริการตอนนี้</option>
+              <option>รอตัดสินใจ</option>
+              <option>รอทางการแพทย์</option>
+              <option>รอดูสถานที่</option>
+              <option>ดูสถานที่แล้วรอตัดสินใจ</option>
+              <option>ปิดการขายสำเร็จ</option>
+              <option>ยกเลิกการขาย</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="md:col-span-2">
+          <button class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition">
+            💾 บันทึกข้อมูลลูกค้า
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-semibold text-gray-800 flex items-center">
+          <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">📊</span>
+          รายการลูกค้า
+        </h3>
+        <div class="text-sm text-gray-600">ทั้งหมด: <span id="total" class="font-semibold text-blue-600">0</span> คน</div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="bg-gray-100">
-              <th class="p-2 text-left">#</th>
-              <th class="p-2 text-left">วันที่</th>
-              <th class="p-2 text-left">ชื่อ</th>
-              <th class="p-2 text-left">เบอร์</th>
-              <th class="p-2 text-left">เพศ/อายุ</th>
-              <th class="p-2 text-left">ห้อง</th>
-              <th class="p-2 text-left">ราคา</th>
-              <th class="p-2 text-left">สถานะ</th>
+            <tr class="bg-gray-50">
+              <th class="px-3 py-2 text-left">#</th>
+              <th class="px-3 py-2 text-left">วันที่</th>
+              <th class="px-3 py-2 text-left">ชื่อ</th>
+              <th class="px-3 py-2 text-left">เบอร์</th>
+              <th class="px-3 py-2 text-left">เพศ/อายุ</th>
+              <th class="px-3 py-2 text-left">ห้อง</th>
+              <th class="px-3 py-2 text-left">ราคา</th>
+              <th class="px-3 py-2 text-left">สถานะ</th>
             </tr>
           </thead>
-          <tbody id="list"></tbody>
+          <tbody id="list" class="divide-y divide-gray-200">
+            <tr id="emptyState">
+              <td colspan="8" class="px-4 py-8 text-center text-gray-500">
+                <div class="flex flex-col items-center">
+                  <span class="text-4xl mb-2">📝</span>
+                  <p>ยังไม่มีข้อมูลลูกค้า</p>
+                  <p class="text-sm">เริ่มต้นโดยการเพิ่มลูกค้าคนแรกของคุณ</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
-  </div>
+  </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -120,59 +173,63 @@
     const db  = getFirestore(app);
 
     const colRef = collection(db, "customers");
-    const q = query(colRef, orderBy("createdAt", "desc"));
+    const q = query(colRef, orderBy("createdAt","desc"));
 
-    const fmtTH = (dStr) => {
-      const d = new Date(dStr);
-      return isNaN(d) ? "-" : d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
-    };
-    const fmtNum = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
+    const fmtTH = (s)=>{ const d=new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
+    const fmtNum = (n)=> new Intl.NumberFormat('th-TH').format(n||0);
 
-    // แสดงรายการ
-    onSnapshot(q, (snap) => {
-      const tbody = document.getElementById("list");
-      const total = document.getElementById("total");
-      let i = 1, rows = "";
-      snap.forEach(doc => {
-        const c = doc.data();
-        rows += `<tr class="border-t">
-          <td class="p-2">${i++}</td>
-          <td class="p-2">${fmtTH(c.date)}</td>
-          <td class="p-2 font-medium">${c.name}</td>
-          <td class="p-2">${c.phone}</td>
-          <td class="p-2">${c.gender} / ${c.age} ปี</td>
-          <td class="p-2">${c.roomType}</td>
-          <td class="p-2">฿${fmtNum(c.price)}</td>
-          <td class="p-2">${c.decision}</td>
+    // Render table
+    onSnapshot(q, (snap)=>{
+      const tbody = document.getElementById('list');
+      const total = document.getElementById('total');
+      if (snap.empty){
+        total.textContent = 0;
+        tbody.innerHTML = document.getElementById('emptyState').outerHTML;
+        return;
+      }
+      let i=1;
+      tbody.innerHTML = Array.from(snap.docs).map(d=>{
+        const c=d.data();
+        return `<tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">${i++}</td>
+          <td class="px-3 py-2">${fmtTH(c.date)}</td>
+          <td class="px-3 py-2 font-medium">${c.name}</td>
+          <td class="px-3 py-2">${c.phone}</td>
+          <td class="px-3 py-2">${c.gender} / ${c.age} ปี</td>
+          <td class="px-3 py-2">${c.roomType}</td>
+          <td class="px-3 py-2">฿${fmtNum(c.price)}</td>
+          <td class="px-3 py-2">${c.decision}</td>
         </tr>`;
-      });
-      tbody.innerHTML = rows || `<tr><td colspan="8" class="p-4 text-center text-gray-500">ยังไม่มีข้อมูล</td></tr>`;
+      }).join('');
       total.textContent = snap.size;
     });
 
-    // เพิ่มข้อมูล
-    const form = document.getElementById("customerForm");
-    const dateEl = document.getElementById("date");
+    // Add
+    const form = document.getElementById('customerForm');
+    const dateEl = document.getElementById('date');
     dateEl.valueAsDate = new Date();
 
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const payload = {
-        date: document.getElementById("date").value,
-        name: document.getElementById("name").value.trim(),
-        phone: document.getElementById("phone").value.trim(),
-        gender: document.getElementById("gender").value,
-        age: Number(document.getElementById("age").value || 0),
-        disease: document.getElementById("disease").value || "",
-        specialCare: document.getElementById("specialCare").value || "",
-        roomType: document.getElementById("roomType").value,
-        price: Number(document.getElementById("price").value || 0),
-        decision: document.getElementById("decision").value,
+        date: document.getElementById('date').value,
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        gender: document.getElementById('gender').value,
+        age: Number(document.getElementById('age').value || 0),
+        disease: document.getElementById('disease').value || '',
+        specialCare: document.getElementById('specialCare').value || '',
+        roomType: document.getElementById('roomType').value,
+        price: Number(document.getElementById('price').value || 0),
+        decision: document.getElementById('decision').value,
         createdAt: serverTimestamp(),
       };
       await addDoc(colRef, payload);
-      form.reset();
-      dateEl.valueAsDate = new Date();
+      form.reset(); dateEl.valueAsDate = new Date();
+
+      const btn = form.querySelector('button[type="submit"]');
+      const t = btn.innerHTML; btn.innerHTML='✅ บันทึกสำเร็จ!'; btn.classList.add('bg-green-600','from-green-500','to-green-600');
+      setTimeout(()=>{ btn.innerHTML=t; btn.classList.remove('bg-green-600','from-green-500','to-green-600'); },1500);
     });
   </script>
 </body>
