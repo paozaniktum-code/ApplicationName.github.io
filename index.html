@@ -2,445 +2,178 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบบันทึกข้อมูลลูกค้า — Firebase Realtime</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>หน้าบ้าน — ระบบลูกค้า (Public)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
-    * { box-sizing: border-box; }
-    body { font-family: 'Sarabun', sans-serif; }
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
-    .modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);width:95%;max-width:520px}
-  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-  <!-- ===== Login Screen ===== -->
-  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white shadow-xl rounded-2xl p-6">
-      <div class="text-center mb-6">
-        <div class="text-4xl">🔒</div>
-        <h1 class="text-2xl font-bold text-gray-800 mt-2">เข้าสู่ระบบ</h1>
-        <p class="text-gray-500 text-sm">ใช้บัญชีอีเมล/รหัสผ่านจาก Firebase Console</p>
+<body class="bg-gray-50 min-h-screen">
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">📋 เพิ่มข้อมูลลูกค้า (สาธารณะ)</h1>
+      <a href="./admin-report-enhanced.html" class="text-blue-600 hover:underline">เข้า “หลังบ้าน”</a>
+    </div>
+
+    <!-- ฟอร์มเพิ่มลูกค้า -->
+    <form id="customerForm" class="bg-white p-5 rounded-xl shadow mb-8 grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">วันที่</label>
+        <input id="date" type="date" class="w-full border rounded-lg px-3 py-2" required />
       </div>
-      <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">ชื่อ</label>
+        <input id="name" type="text" placeholder="ชื่อลูกค้า" class="w-full border rounded-lg px-3 py-2" required />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">เบอร์โทร</label>
+        <input id="phone" type="tel" placeholder="08X-XXX-XXXX" class="w-full border rounded-lg px-3 py-2" required />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-          <input id="loginUsername" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="you@company.com" required />
+          <label class="block text-sm text-gray-600 mb-1">เพศ</label>
+          <select id="gender" class="w-full border rounded-lg px-3 py-2" required>
+            <option value="">เลือก</option>
+            <option>ชาย</option><option>หญิง</option>
+          </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
-          <input id="loginPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required />
+          <label class="block text-sm text-gray-600 mb-1">อายุ</label>
+          <input id="age" type="number" min="1" max="120" class="w-full border rounded-lg px-3 py-2" required />
         </div>
-        <button class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow">เข้าสู่ระบบ</button>
-      </form>
-      <p id="loginError" class="hidden mt-4 text-sm text-red-600 text-center"></p>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">โรคประจำตัว</label>
+        <input id="disease" type="text" placeholder="ถ้ามี" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">การดูแลพิเศษ</label>
+        <textarea id="specialCare" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="เช่น ดูแลเรื่องอาหาร/แพ้ยา ฯลฯ"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">ห้องที่สนใจ</label>
+        <select id="roomType" class="w-full border rounded-lg px-3 py-2" required>
+          <option value="">เลือก</option>
+          <option>ห้องเดี่ยว</option>
+          <option>ห้องรวมชาย</option>
+          <option>ห้องรวมหญิง</option>
+          <option>ห้องรวม 2 ท่าน</option>
+          <option>ห้องรวม 3 ท่าน</option>
+          <option>ห้องรวม 5 ท่าน</option>
+          <option>ห้องพิเศษ</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-gray-600 mb-1">ราคาที่เสนอ (บาท)</label>
+        <input id="price" type="number" min="0" class="w-full border rounded-lg px-3 py-2" required />
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-sm text-gray-600 mb-1">สถานะ</label>
+        <select id="decision" class="w-full border rounded-lg px-3 py-2" required>
+          <option value="">เลือก</option>
+          <option>ใหม่</option>
+          <option>หาข้อมูลเปรียบเทียบ</option>
+          <option>ยังไม่ใช้บริการตอนนี้</option>
+          <option>รอตัดสินใจ</option>
+          <option>รอทางการแพทย์</option>
+          <option>รอดูสถานที่</option>
+          <option>ดูสถานที่แล้วรอตัดสินใจ</option>
+          <option>ปิดการขายสำเร็จ</option>
+          <option>ยกเลิกการขาย</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-3">💾 บันทึกข้อมูลลูกค้า</button>
+      </div>
+    </form>
+
+    <!-- ตารางลูกค้า -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">รายการลูกค้า</h2>
+        <span class="text-sm text-gray-600">ทั้งหมด: <b id="total">0</b> คน</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 text-left">#</th>
+              <th class="p-2 text-left">วันที่</th>
+              <th class="p-2 text-left">ชื่อ</th>
+              <th class="p-2 text-left">เบอร์</th>
+              <th class="p-2 text-left">เพศ/อายุ</th>
+              <th class="p-2 text-left">ห้อง</th>
+              <th class="p-2 text-left">ราคา</th>
+              <th class="p-2 text-left">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="list"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-  <!-- ===== Topbar ===== -->
-  <header id="topbar" class="hidden bg-white/80 backdrop-blur sticky top-0 z-40 border-b border-gray-200">
-    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-2xl">📋</span>
-        <h1 class="text-lg md:text-xl font-semibold text-gray-800">ระบบบันทึกข้อมูลลูกค้า (Firebase)</h1>
-      </div>
-      <div class="flex items-center gap-3">
-        <span id="currentUserBadge" class="text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">ผู้ใช้: -</span>
-        <a href="./admin-report-enhanced.html" class="text-sm bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded-lg">หลังบ้าน/รายงาน</a>
-        <button id="logoutBtn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ===== App Main ===== -->
-  <main id="app" class="hidden">
-    <div class="container mx-auto px-4 py-8">
-      <!-- Tips -->
-      <div class="text-center mb-8">
-        <h2 class="text-4xl font-bold text-gray-800 mb-2">📋 ระบบบันทึกข้อมูลลูกค้า</h2>
-        <p class="text-gray-600">เรียลไทม์จาก Firebase Firestore + ล็อกอินด้วย Firebase Auth</p>
-        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-4xl mx-auto text-left">
-          <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 คำแนะนำ</h3>
-          <ul class="list-disc ml-5 text-xs text-blue-700 space-y-1">
-            <li>ข้อมูลซิงก์ข้ามอุปกรณ์แบบเรียลไทม์ (onSnapshot)</li>
-            <li>การเข้าถึงข้อมูลต้องล็อกอิน (ควบคุมด้วย Firestore Rules)</li>
-            <li>ปุ่มส่งออกจะดึงข้อมูลจาก Firestore (ไม่ใช่ localStorage)</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Form: Add Customer -->
-      <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
-          <span class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">+</span>
-          เพิ่มข้อมูลลูกค้าใหม่
-        </h2>
-        <form id="customerForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Basic -->
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
-              <input type="date" id="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ</label>
-              <input type="text" id="name" placeholder="กรอกชื่อลูกค้า" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">เบอร์โทรศัพท์</label>
-              <input type="tel" id="phone" placeholder="08X-XXX-XXXX" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
-            </div>
-          </div>
-          <!-- Detail -->
-          <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
-                <select id="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                  <option value="">เลือกเพศ</option>
-                  <option value="ชาย">ชาย</option>
-                  <option value="หญิง">หญิง</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">อายุ</label>
-                <input type="number" id="age" placeholder="อายุ" min="1" max="120" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">โรคประจำตัว</label>
-              <input type="text" id="disease" placeholder="ระบุโรคประจำตัว (ถ้ามี)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">การดูแลพิเศษ</label>
-              <textarea id="specialCare" placeholder="ระบุการดูแลพิเศษที่ต้องการ" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-            </div>
-          </div>
-          <!-- Room & Decision -->
-          <div class="md:col-span-2 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-3">สนใจห้อง</label>
-              <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องเดี่ยว" class="mr-2"><span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">🏠 ห้องเดี่ยว</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมชาย" class="mr-2"><span class="bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm">👨 ห้องรวมชาย</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวมหญิง" class="mr-2"><span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">👩 ห้องรวมหญิง</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 2 ท่าน" class="mr-2"><span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">👥 ห้องรวม 2 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 3 ท่าน" class="mr-2"><span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👦 ห้องรวม 3 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องรวม 5 ท่าน" class="mr-2"><span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span></label>
-                <label class="flex items-center"><input type="radio" name="roomType" value="ห้องพิเศษ" class="mr-2"><span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">⭐ ห้องพิเศษ</span></label>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ราคาที่เสนอ (บาท)</label>
-                <input type="number" id="price" placeholder="0" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">สถานะการตัดสินใจ</label>
-                <select id="decision" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
-                  <option value="">เลือกสถานะ</option>
-                  <option value="ใหม่">🆕 ใหม่</option>
-                  <option value="หาข้อมูลเปรียบเทียบ">🔍 หาข้อมูลเปรียบเทียบ</option>
-                  <option value="ยังไม่ใช้บริการตอนนี้">⏸️ ยังไม่ใช้บริการตอนนี้</option>
-                  <option value="รอตัดสินใจ">⏳ รอตัดสินใจ</option>
-                  <option value="รอทางการแพทย์">🏥 รอทางการแพทย์</option>
-                  <option value="รอดูสถานที่">👀 รอดูสถานที่</option>
-                  <option value="ดูสถานที่แล้วรอตัดสินใจ">🏠 ดูสถานที่แล้วรอตัดสินใจ</option>
-                  <option value="ปิดการขายสำเร็จ">✅ ปิดการขายสำเร็จ</option>
-                  <option value="ยกเลิกการขาย">❌ ยกเลิกการขาย</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="md:col-span-2">
-            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg">💾 บันทึกข้อมูลลูกค้า</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Customers Table -->
-      <div class="bg-white rounded-xl shadow-lg p-6">
-        <div class="flex justify-between items-center mb-6">
-          <h2 class="text-2xl font-semibold text-gray-800 flex items-center"><span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm mr-3">📊</span> รายการลูกค้า</h2>
-          <div class="flex items-center gap-4">
-            <div class="text-sm text-gray-600">ทั้งหมด: <span id="totalCustomers" class="font-semibold text-blue-600">0</span> คน</div>
-            <div class="flex gap-2">
-              <button onclick="exportFS()" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 text-sm">💾 ส่งออกข้อมูล</button>
-              <button onclick="printReport()" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2 text-sm">🖨️ ปริ้นรายงาน</button>
-            </div>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full table-auto">
-            <thead>
-              <tr class="bg-gray-50">
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ลำดับ</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">วันที่</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ชื่อ</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">เบอร์</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">เพศ/อายุ</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ห้องที่สนใจ</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">ราคา</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">สถานะ</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody id="customerList" class="divide-y divide-gray-200">
-              <tr id="emptyState">
-                <td colspan="9" class="px-4 py-8 text-center text-gray-500">
-                  <div class="flex flex-col items-center">
-                    <span class="text-4xl mb-2">📝</span>
-                    <p>ยังไม่มีข้อมูลลูกค้า</p>
-                    <p class="text-sm">เริ่มต้นโดยการเพิ่มลูกค้าคนแรกของคุณ</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- ===== Firebase + App Script ===== -->
   <script type="module">
-    /*************** Firebase Config ***************/
-    const firebaseConfig = {
-      apiKey: "AIzaSyA4onNF2FmdJti7_fX6swoa-cqdq3xojTk",
-      authDomain: "lead-54035.firebaseapp.com",
-      projectId: "lead-54035",
-      storageBucket: "lead-54035.firebasestorage.app",
-      messagingSenderId: "993343538703",
-      appId: "1:993343538703:web:51ba10b9296b4716fa457a",
-      measurementId: "G-KB5ZRKN3T5"
-    };
-
-    /*************** Imports ***************/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, updateDoc, doc, deleteDoc, query, orderBy, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { firebaseConfig } from "./firebaseConfig.js";
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    await setPersistence(auth, browserLocalPersistence);
+    const db  = getFirestore(app);
 
-    // UI refs
-    const loginForm = document.getElementById('loginForm');
-    const loginScreen = document.getElementById('loginScreen');
-    const topbar = document.getElementById('topbar');
-    const appMain = document.getElementById('app');
-    const currentUserBadge = document.getElementById('currentUserBadge');
-    const logoutBtn = document.getElementById('logoutBtn');
+    const colRef = collection(db, "customers");
+    const q = query(colRef, orderBy("createdAt", "desc"));
 
-    // Helpers
-    window.formatDate = (s) => { const d = new Date(s); if (isNaN(d)) return '-'; return d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' }); };
-    window.formatPrice = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
-    window.getStatusBadge = (status) => ({
-      'ใหม่': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🆕 ใหม่</span>',
-      'หาข้อมูลเปรียบเทียบ': '<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">🔍 หาข้อมูลเปรียบเทียบ</span>',
-      'ยังไม่ใช้บริการตอนนี้': '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">⏸️ ยังไม่ใช้บริการตอนนี้</span>',
-      'รอตัดสินใจ': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">⏳ รอตัดสินใจ</span>',
-      'รอทางการแพทย์': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">🏥 รอทางการแพทย์</span>',
-      'รอดูสถานที่': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👀 รอดูสถานที่</span>',
-      'ดูสถานที่แล้วรอตัดสินใจ': '<span class="bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ดูสถานที่แล้วรอตัดสินใจ</span>',
-      'ปิดการขายสำเร็จ': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">✅ ปิดการขายสำเร็จ</span>',
-      'ยกเลิกการขาย': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">❌ ยกเลิกการขาย</span>'
-    }[status] || `<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">${status}</span>`);
+    const fmtTH = (dStr) => {
+      const d = new Date(dStr);
+      return isNaN(d) ? "-" : d.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+    };
+    const fmtNum = (n) => new Intl.NumberFormat('th-TH').format(n || 0);
 
-    window.getRoomBadge = (roomType) => ({
-      'ห้องเดี่ยว': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">🏠 ห้องเดี่ยว</span>',
-      'ห้องรวมชาย': '<span class="bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full text-xs font-medium">👨 ห้องรวมชาย</span>',
-      'ห้องรวมหญิง': '<span class="bg-pink-100 text-pink-800 px-2 py-1 rounded-full text-xs font-medium">👩 ห้องรวมหญิง</span>',
-      'ห้องรวม 2 ท่าน': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">👥 ห้องรวม 2 ท่าน</span>',
-      'ห้องรวม 3 ท่าน': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👦 ห้องรวม 3 ท่าน</span>',
-      'ห้องรวม 5 ท่าน': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">👨‍👩‍👧‍👦👶 ห้องรวม 5 ท่าน</span>',
-      'ห้องพิเศษ': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">⭐ ห้องพิเศษ</span>'
-    }[roomType] || roomType);
-
-    // Auth
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        const box = document.getElementById('loginError');
-        box.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (err?.message || 'Unknown error');
-        box.classList.remove('hidden');
-      }
-    });
-    document.getElementById('logoutBtn').addEventListener('click', async () => { await signOut(auth); });
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        currentUserBadge.textContent = 'ผู้ใช้: ' + (user.email || user.uid);
-        loginScreen.classList.add('hidden');
-        topbar.classList.remove('hidden');
-        appMain.classList.remove('hidden');
-        startRealtime();
-      } else {
-        loginScreen.classList.remove('hidden');
-        topbar.classList.add('hidden');
-        appMain.classList.add('hidden');
-        stopRealtime();
-      }
-    });
-
-    // Firestore
-    const colRef = collection(db, 'customers');
-    let unsubscribe = null;
-    let currentItems = [];
-
-    function startRealtime() {
-      const q = query(colRef, orderBy('createdAt', 'desc'));
-      unsubscribe = onSnapshot(q, (snap) => {
-        currentItems = [];
-        snap.forEach(d => currentItems.push({ id: d.id, ...d.data() }));
-        renderCustomersFromFS(currentItems);
+    // แสดงรายการ
+    onSnapshot(q, (snap) => {
+      const tbody = document.getElementById("list");
+      const total = document.getElementById("total");
+      let i = 1, rows = "";
+      snap.forEach(doc => {
+        const c = doc.data();
+        rows += `<tr class="border-t">
+          <td class="p-2">${i++}</td>
+          <td class="p-2">${fmtTH(c.date)}</td>
+          <td class="p-2 font-medium">${c.name}</td>
+          <td class="p-2">${c.phone}</td>
+          <td class="p-2">${c.gender} / ${c.age} ปี</td>
+          <td class="p-2">${c.roomType}</td>
+          <td class="p-2">฿${fmtNum(c.price)}</td>
+          <td class="p-2">${c.decision}</td>
+        </tr>`;
       });
-    }
-    function stopRealtime(){ if (unsubscribe) unsubscribe(); unsubscribe = null; currentItems = []; }
-
-    // Add
-    document.getElementById('customerForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const roomType = document.querySelector('input[name="roomType"]:checked')?.value;
-      if (!roomType) { alert('กรุณาเลือกประเภทห้องที่สนใจ'); return; }
-      const customer = {
-        date: document.getElementById('date').value,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        gender: document.getElementById('gender').value,
-        age: parseInt(document.getElementById('age').value),
-        disease: document.getElementById('disease').value || '',
-        specialCare: document.getElementById('specialCare').value || '',
-        roomType,
-        price: parseInt(document.getElementById('price').value || '0'),
-        decision: document.getElementById('decision').value,
-        createdAt: serverTimestamp()
-      };
-      await addDoc(colRef, customer);
-      e.target.reset();
-      document.getElementById('date').valueAsDate = new Date();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const t = btn.innerHTML; btn.innerHTML = '✅ บันทึกสำเร็จ!'; btn.classList.add('bg-green-500');
-      setTimeout(()=>{ btn.innerHTML=t; btn.classList.remove('bg-green-500'); },1500);
+      tbody.innerHTML = rows || `<tr><td colspan="8" class="p-4 text-center text-gray-500">ยังไม่มีข้อมูล</td></tr>`;
+      total.textContent = snap.size;
     });
 
-    // Update status / Delete
-    async function updateCustomerStatus(id, newStatus){ await updateDoc(doc(db,'customers',id), { decision: newStatus }); }
-    async function removeCustomer(id){ await deleteDoc(doc(db,'customers',id)); }
+    // เพิ่มข้อมูล
+    const form = document.getElementById("customerForm");
+    const dateEl = document.getElementById("date");
+    dateEl.valueAsDate = new Date();
 
-    // Modal UI for status
-    function openStatusModal(id, current) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'modal-backdrop';
-      wrapper.innerHTML = `
-        <div class="modal p-5">
-          <h3 class="text-lg font-semibold mb-3">แก้ไขสถานะ</h3>
-          <select id="newStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
-            ${['ใหม่','หาข้อมูลเปรียบเทียบ','ยังไม่ใช้บริการตอนนี้','รอตัดสินใจ','รอทางการแพทย์','รอดูสถานที่','ดูสถานที่แล้วรอตัดสินใจ','ปิดการขายสำเร็จ','ยกเลิกการขาย'].map(s=>`<option ${s===current?'selected':''}>${s}</option>`).join('')}
-          </select>
-          <div class="flex gap-2 justify-end">
-            <button id="cancelM" class="px-3 py-2 rounded-lg border">ยกเลิก</button>
-            <button id="okM" class="px-3 py-2 rounded-lg bg-blue-600 text-white">บันทึก</button>
-          </div>
-        </div>`;
-      document.body.appendChild(wrapper);
-      wrapper.querySelector('#cancelM').onclick = ()=> document.body.removeChild(wrapper);
-      wrapper.querySelector('#okM').onclick = async ()=>{
-        const s = wrapper.querySelector('#newStatus').value;
-        await updateCustomerStatus(id, s);
-        document.body.removeChild(wrapper);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const payload = {
+        date: document.getElementById("date").value,
+        name: document.getElementById("name").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        gender: document.getElementById("gender").value,
+        age: Number(document.getElementById("age").value || 0),
+        disease: document.getElementById("disease").value || "",
+        specialCare: document.getElementById("specialCare").value || "",
+        roomType: document.getElementById("roomType").value,
+        price: Number(document.getElementById("price").value || 0),
+        decision: document.getElementById("decision").value,
+        createdAt: serverTimestamp(),
       };
-    }
-
-    // Render table
-    function renderCustomersFromFS(items){
-      const tbody = document.getElementById('customerList');
-      const totalCustomers = document.getElementById('totalCustomers');
-      totalCustomers.textContent = items.length;
-      if (!items.length){
-        tbody.innerHTML = document.getElementById('emptyState').outerHTML;
-        return;
-      }
-      const rows = items.map((c, idx) => `
-        <tr class="hover:bg-gray-50 transition-colors duration-150">
-          <td class="px-4 py-3 text-sm font-medium text-gray-900">${idx + 1}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${formatDate(c.date)}</td>
-          <td class="px-4 py-3 text-sm font-medium text-gray-900">${c.name}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${c.phone}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">${c.gender} / ${c.age} ปี</td>
-          <td class="px-4 py-3 text-sm">${getRoomBadge(c.roomType)}</td>
-          <td class="px-4 py-3 text-sm text-gray-700">฿${formatPrice(c.price || 0)}</td>
-          <td class="px-4 py-3 text-sm">${getStatusBadge(c.decision)}</td>
-          <td class="px-4 py-3 text-sm">
-            <button onclick="viewCustomerFS('${c.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="ดูรายละเอียด">👁️</button>
-            <button onclick="editStatusFS('${c.id}','${c.decision || ''}')" class="text-green-600 hover:text-green-800 mr-2" title="แก้ไขสถานะ">✏️</button>
-            <button onclick="deleteFS('${c.id}')" class="text-red-600 hover:text-red-800" title="ลบ">🗑️</button>
-          </td>
-        </tr>`).join('');
-      tbody.innerHTML = rows;
-    }
-
-    // Actions
-    window.viewCustomerFS = (id) => {
-      const c = currentItems.find(v => v.id === id);
-      if(!c) return;
-      const details = `📋 รายละเอียดลูกค้า\n\nวันที่: ${formatDate(c.date)}\nชื่อ: ${c.name}\nเบอร์: ${c.phone}\nเพศ: ${c.gender}\nอายุ: ${c.age} ปี\nโรคประจำตัว: ${c.disease || 'ไม่มี'}\nการดูแลพิเศษ: ${c.specialCare || 'ไม่มี'}\nห้องที่สนใจ: ${c.roomType}\nราคา: ฿${formatPrice(c.price || 0)}\nสถานะ: ${c.decision}`;
-      alert(details);
-    };
-    window.editStatusFS = (id, currentStatus) => openStatusModal(id, currentStatus || 'รอตัดสินใจ');
-    window.deleteFS = async (id) => { if (confirm('คุณต้องการลบข้อมูลลูกค้านี้หรือไม่?')) await removeCustomer(id); };
-
-    // Export (Firestore → JSON)
-    window.exportFS = async () => {
-      const snap = await getDocs(query(colRef, orderBy('createdAt','desc')));
-      const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-      const data = JSON.stringify({ customers: arr, exportedAt: new Date().toISOString() }, null, 2);
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      link.download = `customers-fs-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-    };
-
-    // Print report
-    window.printReport = () => {
-      if (!currentItems.length) { alert('ไม่มีข้อมูลลูกค้าให้ปริ้น'); return; }
-      const win = window.open('', '_blank');
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>รายงานข้อมูลลูกค้า</title>
-<style>@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:12px}th{background:#f8f9fa;font-weight:700}</style></head><body>
-<h2>📋 รายงานข้อมูลลูกค้า</h2>
-<p>วันที่พิมพ์: ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'})}</p>
-<table><thead><tr><th>ลำดับ</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์โทร</th><th>เพศ/อายุ</th><th>ห้องที่สนใจ</th><th>ราคา (บาท)</th><th>สถานะ</th><th>โรคประจำตัว</th><th>การดูแลพิเศษ</th></tr></thead><tbody>
-${currentItems.map((c,i)=>`<tr><td>${i+1}</td><td>${new Date(c.date).toLocaleDateString('th-TH')}</td><td>${c.name||''}</td><td>${c.phone||''}</td><td>${c.gender||''} / ${c.age||''} ปี</td><td>${c.roomType||''}</td><td>${formatPrice(c.price||0)}</td><td>${c.decision||''}</td><td>${c.disease||'-'}</td><td>${c.specialCare||'-'}</td></tr>`).join('')}
-</tbody></table></body></html>`;
-      win.document.write(html); win.document.close(); win.onload = ()=> win.print();
-    };
-
-    // (ทางเลือก) Migration localStorage → Firestore
-    window.migrateLocalToFirestore = async () => {
-      const raw = localStorage.getItem('customers');
-      const customersLocal = raw ? JSON.parse(raw) : [];
-      if (!customersLocal.length) { alert('ไม่พบข้อมูลในเครื่องนี้'); return; }
-      const batch = writeBatch(db);
-      const now = new Date();
-      customersLocal.forEach(c => {
-        const ref = doc(collection(db,'customers'));
-        batch.set(ref, {
-          date: c.date, name: c.name, phone: c.phone, gender: c.gender,
-          age: Number(c.age||0), disease: c.disease || '', specialCare: c.specialCare || '',
-          roomType: c.roomType, price: Number(c.price||0), decision: c.decision, createdAt: now
-        });
-      });
-      await batch.commit();
-      alert(`ย้ายข้อมูลสำเร็จ: ${customersLocal.length} รายการ`);
-    };
-
-    // default date
-    const dateEl = document.getElementById('date');
-    if (dateEl) dateEl.valueAsDate = new Date();
+      await addDoc(colRef, payload);
+      form.reset();
+      dateEl.valueAsDate = new Date();
+    });
   </script>
 </body>
 </html>
