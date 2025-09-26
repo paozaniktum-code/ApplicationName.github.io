@@ -359,7 +359,7 @@
           <td class="px-4 py-3 text-sm">
             <button onclick="viewCustomerFS('${c.id}')" class="text-blue-600 hover:text-blue-800 mr-2" title="ดูรายละเอียด">👁️</button>
             <button onclick="editStatusFS('${c.id}','${c.decision || ''}')" class="text-green-600 hover:text-green-800 mr-2" title="แก้ไขสถานะ">✏️</button>
-            <button onclick="deleteFS('${c.id}')}" class="text-red-600 hover:text-red-800" title="ลบ">🗑️</button>
+            <button onclick="deleteFS('${c.id}')" class="text-red-600 hover:text-red-800" title="ลบ">🗑️</button>
           </td>
         </tr>`).join('');
       tbody.innerHTML = rows;
