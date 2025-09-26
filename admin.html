@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+
+window.editStatus = (id, currentStatus)=>{
+const tpl = document.getElementById('statusModalTpl').content.cloneNode(true);
+const modal = tpl.querySelector('.modal-backdrop');
+const select = tpl.querySelector('#modalStatus');
+select.value = currentStatus || 'รอตัดสินใจ';
+tpl.querySelector('#okBtn').addEventListener('click', async ()=>{
+await updateDoc(doc(db,'customers',id), { decision: select.value });
+document.body.removeChild(modal);
+});
+tpl.querySelector('#cancelBtn').addEventListener('click', ()=> document.body.removeChild(modal));
+document.body.appendChild(modal);
+};
+
+
+// Export CSV
+document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
+if (!currentItems.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
+const header = ['ลำดับ','วันที่','ชื่อ','เบอร์','เพศ','อายุ','ห้อง','ราคา','สถานะ','โรคประจำตัว','การดูแลพิเศษ'];
+const rows = currentItems.map(c=>[
+c.idx, fmtTH(c.date), csvEscape(c.name), csvEscape(c.phone),
+c.gender, c.age, csvEscape(c.roomType),
+c.price, csvEscape(c.decision||''), csvEscape(c.disease||''), csvEscape(c.specialCare||'')
+]);
+const csv = [header, ...rows].map(r=>r.map(cell=>toCsvCell(cell)).join(',')).join('\n');
+const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+const a = document.createElement('a');
+a.href = URL.createObjectURL(blob);
+a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
+a.click();
+});
+
+
+const csvEscape = (s)=> (s??'').toString().replace(/\r?\n/g,' ').trim();
+const toCsvCell = (v)=>{
+const s = (v??'').toString();
+return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+};
+
+
+// Print report
+document.getElementById('printBtn').addEventListener('click', ()=>{
+if (!currentItems.length) return alert('ไม่มีข้อมูลลูกค้าให้พิมพ์');
+const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานลูกค้า</title>
+<style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
+h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
+th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
+th{background:#f6f7f9}</style></head><body>
+<h1>📋 รายงานข้อมูลลูกค้า</h1>
+<div>พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
+<table><thead><tr>
+<th>#</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>เพศ/อายุ</th><th>ห้อง</th><th>ราคา</th><th>สถานะ</th><th>โรค</th><th>ดูแลพิเศษ</th>
+</tr></thead><tbody>
+${currentItems.map(c=>`<tr>
+<td>${c.idx}</td>
+<td>${fmtTH(c.date)}</td>
+<td>${escapeHtml(c.name)}</td>
+<td>${escapeHtml(c.phone)}</td>
+<td>${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
+<td>${escapeHtml(c.roomType)}</td>
+<td>${fmtNum(c.price)}</td>
+<td>${escapeHtml(c.decision||'-')}</td>
+<td>${escapeHtml(c.disease||'-')}</td>
+<td>${escapeHtml(c.specialCare||'-')}</td>
+</tr>`).join('')}
+</tbody></table></body></html>`;
+const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
+});
+
+
+const escapeHtml = (s)=> (s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[m]));
+</script>
+</body>
+</html>
