@@ -3,166 +3,264 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>หลังบ้าน — ระบบจัดการลูกค้า</title>
+  <title>หลังบ้าน — รายงานลูกค้า</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: 'Sarabun', sans-serif; }
-    .menu-active { background:#e0f2fe; font-weight:bold; color:#2563eb; }
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    body{font-family:'Sarabun',sans-serif}
+    .menu-active{background:#e0f2fe;color:#2563eb;font-weight:700}
+    .chip{background:#eef2ff;color:#3730a3;padding:.25rem .6rem;border-radius:9999px;font-size:.82rem}
   </style>
 </head>
-<body class="bg-blue-50 min-h-screen flex">
+<body class="bg-sky-50 min-h-screen flex">
   <!-- Sidebar -->
   <aside class="w-64 bg-white border-r flex flex-col">
     <div class="p-4 border-b">
-      <h1 class="text-lg font-bold text-blue-600">App Admin</h1>
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">A</div>
+        <h1 class="text-lg font-bold text-blue-700">App Admin</h1>
+      </div>
     </div>
     <nav class="flex-1 p-4 space-y-2">
-      <h2 class="text-xs text-gray-400 mb-2">เมนู</h2>
-      <button id="menuList" class="flex items-center gap-2 px-3 py-2 rounded w-full text-left hover:bg-blue-100 menu-active">
-        📋 รายการลูกค้า
-      </button>
-      <button id="menuReport" class="flex items-center gap-2 px-3 py-2 rounded w-full text-left hover:bg-blue-100">
-        🔍 ค้นหา/สรุป
-      </button>
+      <div class="text-xs text-gray-400 mb-1">เมนู</div>
+      <a href="#" id="btnList" class="block px-3 py-2 rounded hover:bg-blue-100">📋 รายการลูกค้า</a>
+      <button id="btnReport" class="w-full text-left px-3 py-2 rounded hover:bg-blue-100 menu-active">🔎 ค้นหา/สรุป</button>
     </nav>
-    <div class="p-4 border-t text-sm text-gray-600">
-      ผู้ใช้: <b id="userRole">-</b><br/>
-      <span id="userEmail" class="text-xs text-gray-500"></span>
+    <div class="mt-auto p-4 border-t">
+      <div class="text-sm"><span class="text-gray-500">ผู้ใช้:</span> <b id="roleBadge">-</b></div>
+      <div id="emailBadge" class="text-xs text-gray-500 truncate"></div>
     </div>
-    <div class="p-4">
-      <button id="logoutBtn" class="w-full bg-red-500 hover:bg-red-600 text-white text-sm font-semibold px-3 py-2 rounded-lg">
+    <div class="p-4 pt-2">
+      <button id="logoutBtn" class="w-full bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold px-3 py-2 rounded-lg">
         ออกจากระบบ
       </button>
+      <div class="text-xs text-gray-400 mt-3">© 2025 YourBrand</div>
     </div>
-    <div class="p-4 text-xs text-gray-400">© 2025 YourBrand</div>
   </aside>
 
   <!-- Main -->
   <main class="flex-1 p-6">
-    <!-- รายการลูกค้า -->
-    <section id="pageList">
-      <h2 class="text-xl font-bold mb-4">📋 รายการลูกค้า</h2>
-      <div id="customerList" class="space-y-3"></div>
-    </section>
+    <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+      📚 รายงานลูกค้า
+    </h2>
 
-    <!-- ค้นหา/สรุป -->
-    <section id="pageReport" class="hidden">
-      <h2 class="text-xl font-bold mb-2">📊 รายงานลูกค้า</h2>
-      <p class="text-gray-600 mb-4">เลือกตัวกรอง → เลือกคอลัมน์ใน Report → Export</p>
+    <!-- แถบ Breadcrumb เล็กๆ -->
+    <div class="text-sm text-gray-500 mb-3">เลือกตัวกรอง → เลือกคอลัมน์ใน Report → Export</div>
 
-      <!-- ตัวกรอง -->
-      <div class="bg-white p-4 rounded-lg shadow mb-4 flex gap-2">
-        <input id="searchBox" type="text" placeholder="ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ" 
-               class="flex-1 border px-3 py-2 rounded-lg"/>
-        <select id="filterStatus" class="border px-3 py-2 rounded-lg">
-          <option value="">ทุกสถานะ</option>
-          <option>ใหม่</option><option>ปิดการขายสำเร็จ</option>
-          <option>รอทางการแพทย์</option><option>ยกเลิกการขาย</option>
+    <!-- แถบค้นหาแบบเดิม -->
+    <div class="bg-white rounded-xl shadow p-4 mb-4">
+      <div class="flex items-center gap-3">
+        <input id="qText" type="text" placeholder="ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
+               class="flex-1 border rounded-lg px-4 py-2.5 focus:ring focus:ring-blue-200"/>
+        <select id="qStatus" class="border rounded-lg px-3 py-2.5">
+          <option value="">ใหม่</option>
+          <option value="all">ทั้งหมด</option>
         </select>
-        <button id="btnFilter" class="bg-blue-600 text-white px-4 py-2 rounded-lg">ใช้ตัวกรอง</button>
-        <button id="btnClear" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg">ล้างค่า</button>
+        <button id="btnApply" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg">ใช้ตัวกรอง</button>
+        <button id="btnClear" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2.5 rounded-lg">ล้างค่า</button>
       </div>
+    </div>
 
-      <!-- Export -->
-      <div class="bg-white p-4 rounded-lg shadow mb-4">
-        <h3 class="font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
-          <label><input type="checkbox" class="colChk" value="date" checked> วันที่</label>
-          <label><input type="checkbox" class="colChk" value="name" checked> ชื่อ</label>
-          <label><input type="checkbox" class="colChk" value="phone" checked> เบอร์</label>
-          <label><input type="checkbox" class="colChk" value="roomType" checked> ห้อง</label>
-          <label><input type="checkbox" class="colChk" value="gender"> เพศ</label>
-          <label><input type="checkbox" class="colChk" value="age"> อายุ</label>
-          <label><input type="checkbox" class="colChk" value="price"> ราคา</label>
-          <label><input type="checkbox" class="colChk" value="decision"> สถานะ</label>
-        </div>
-        <div class="flex gap-2">
-          <button id="exportCsvBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg">⬇️ Export CSV</button>
-          <button id="exportJsonBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg">⬇️ Export JSON</button>
-          <button id="exportExcelBtn" class="bg-green-500 text-white px-4 py-2 rounded-lg">⬇️ Export Excel</button>
-        </div>
-        <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</p>
+    <!-- Report: เลือกคอลัมน์ + Export -->
+    <div class="bg-white rounded-xl shadow p-4 mb-6">
+      <div class="text-lg font-semibold mb-3">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-[15px]">
+        <label><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
+        <label><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
+        <label><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
+        <label><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
+        <label><input class="colChk" type="checkbox" value="gender"> เพศ</label>
+        <label><input class="colChk" type="checkbox" value="age"> อายุ</label>
+        <label><input class="colChk" type="checkbox" value="price"> ราคา</label>
+        <label><input class="colChk" type="checkbox" value="decision"> สถานะ</label>
       </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="exportCsv" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-lg">⬇️ Export CSV</button>
+        <button id="exportJson" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-lg">⬇️ Export JSON</button>
+        <button id="exportXlsx" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-lg">⬇️ Export Excel</button>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</p>
+    </div>
 
-      <!-- Results -->
-      <div id="reportList" class="space-y-3"></div>
-    </section>
+    <!-- รายการผลลัพธ์ -->
+    <div id="result" class="space-y-3"></div>
   </main>
 
-  <!-- Firebase -->
+  <!-- Firebase & App -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, query, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
+    const db   = getFirestore(app);
 
-    const pageList = document.getElementById("pageList");
-    const pageReport = document.getElementById("pageReport");
-    const menuList = document.getElementById("menuList");
-    const menuReport = document.getElementById("menuReport");
-    const logoutBtn = document.getElementById("logoutBtn");
+    // UI refs
+    const roleBadge = document.getElementById('roleBadge');
+    const emailBadge = document.getElementById('emailBadge');
+    const qText = document.getElementById('qText');
+    const qStatus = document.getElementById('qStatus');
+    const btnApply = document.getElementById('btnApply');
+    const btnClear = document.getElementById('btnClear');
+    const resultEl = document.getElementById('result');
 
-    let userRole="viewer";
-    onAuthStateChanged(auth, (user)=>{
-      if(user){
-        document.getElementById("userEmail").textContent = user.email;
-        document.getElementById("userRole").textContent = userRole;
-      }else{
-        window.location.href="index.html";
-      }
+    const exportCsvBtn = document.getElementById('exportCsv');
+    const exportJsonBtn = document.getElementById('exportJson');
+    const exportXlsxBtn = document.getElementById('exportXlsx');
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', ()=> signOut(auth));
+
+    // state
+    let allItems = [];
+    let viewItems = [];
+    let isAdmin = false;
+
+    // auth
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){ location.href='index.html'; return; }
+      emailBadge.textContent = user.email || user.uid;
+
+      try{
+        const token = await getIdTokenResult(user, true);
+        const role = token.claims.role || 'viewer';
+        roleBadge.textContent = role;
+        isAdmin = role === 'admin';
+      }catch(e){ roleBadge.textContent='viewer'; }
+
+      startRealtime();
     });
 
-    logoutBtn.addEventListener("click", ()=> signOut(auth));
-
-    // toggle menu
-    function showPage(page){
-      if(page==="list"){
-        pageList.classList.remove("hidden");
-        pageReport.classList.add("hidden");
-        menuList.classList.add("menu-active");
-        menuReport.classList.remove("menu-active");
-      }else{
-        pageReport.classList.remove("hidden");
-        pageList.classList.add("hidden");
-        menuReport.classList.add("menu-active");
-        menuList.classList.remove("menu-active");
-      }
-    }
-    menuList.addEventListener("click", ()=>showPage("list"));
-    menuReport.addEventListener("click", ()=>showPage("report"));
-    showPage("list");
-
-    // Load customers
-    const qy = query(collection(db,"customers"), orderBy("createdAt","desc"));
-    onSnapshot(qy, (snap)=>{
-      const list = document.getElementById("customerList");
-      list.innerHTML="";
-      snap.forEach((docu)=>{
-        const c=docu.data();
-        const div=document.createElement("div");
-        div.className="bg-white p-4 rounded-lg shadow flex justify-between items-center";
-        div.innerHTML=`
-          <div>
-            <div class="font-semibold">${c.name||"-"} <span class="text-sm text-gray-500">(${c.phone||"-"})</span></div>
-            <div class="text-sm text-gray-600">เพศ: ${c.gender||"-"} / อายุ: ${c.age||"-"}</div>
-            <div class="text-sm text-gray-600">ห้อง: ${c.roomType||"-"} • ราคา: ฿${c.price||0} • สถานะ: ${c.decision||"-"}</div>
-          </div>
-          <div>
-            <button class="bg-red-500 text-white px-3 py-1 rounded" onclick="deleteCustomer('${docu.id}')">ลบ</button>
-          </div>
-        `;
-        list.appendChild(div);
+    // fetch realtime
+    function startRealtime(){
+      const qy = query(collection(db,'customers'), orderBy('createdAt','desc'));
+      onSnapshot(qy, (snap)=>{
+        allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        applyFilter();
       });
+    }
+
+    // helpers
+    const fmtTH = s => { const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
+    const fmtNum = n => new Intl.NumberFormat('th-TH').format(n||0);
+
+    function matchesKeyword(c, kw){
+      if(!kw) return true;
+      kw = kw.toLowerCase();
+      const hay = [
+        c.name, c.phone, c.gender, c.roomType, c.decision, String(c.age), String(c.price)
+      ].map(v=>(v??'').toString().toLowerCase()).join(' ');
+      return hay.includes(kw);
+    }
+
+    // filter UI behaviour like the old one
+    function applyFilter(){
+      const kw = qText.value.trim();
+      const mode = qStatus.value; // "" = ใหม่, "all" = ทั้งหมด
+      viewItems = allItems.filter(c=>{
+        const okKw = matchesKeyword(c, kw);
+        const okStatus = mode === 'all' ? true : ((c.decision||'') === 'ใหม่');
+        return okKw && okStatus;
+      });
+      renderList();
+    }
+
+    function clearFilter(){
+      qText.value = '';
+      qStatus.value = '';
+      applyFilter();
+    }
+
+    btnApply.addEventListener('click', applyFilter);
+    btnClear.addEventListener('click', clearFilter);
+    qText.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilter(); });
+
+    // render
+    function renderList(){
+      if(!viewItems.length){
+        resultEl.innerHTML = `<div class="text-gray-500 bg-white rounded-xl shadow p-6">ยังไม่มีข้อมูล</div>`;
+        return;
+      }
+      resultEl.innerHTML = viewItems.map(c=>{
+        return `
+        <div class="bg-white rounded-xl shadow p-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-sm text-gray-500 mb-1">${fmtTH(c.date)} • <span class="chip">${c.roomType||'-'}</span></div>
+              <div class="text-xl font-semibold truncate">${c.name||'-'}</div>
+              <div class="text-gray-600 mt-1 flex flex-wrap gap-2 items-center">
+                <a href="tel:${c.phone||''}" class="text-blue-600 hover:underline flex items-center gap-1">
+                  📞 <span>${c.phone||'-'}</span>
+                </a>
+                <span class="chip">เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี</span>
+                <span class="chip">ราคา: ฿${fmtNum(c.price)}</span>
+                <span class="chip bg-amber-100 text-amber-900">${c.decision||'-'}</span>
+              </div>
+            </div>
+            <div class="shrink-0">
+              ${isAdmin ? `<button class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg" onclick="deleteCustomer('${c.id}')">ลบ</button>` : ``}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // delete (admin only)
+    window.deleteCustomer = async (id)=>{
+      if(!isAdmin) return alert('อนุญาตเฉพาะผู้ดูแลระบบ');
+      if(confirm('ยืนยันลบรายการนี้?')) await deleteDoc(doc(db,'customers',id));
+    };
+
+    // Export
+    const getSelectedCols = ()=> Array.from(document.querySelectorAll('.colChk:checked')).map(x=>x.value);
+    const mapRow = (c, cols)=> cols.map(k=>{
+      if(k==='date') return fmtTH(c.date);
+      return (c[k] ?? '');
     });
 
-    window.deleteCustomer = async (id)=>{
-      if(userRole!=="admin") return alert("เฉพาะ Admin เท่านั้น");
-      await deleteDoc(doc(db,"customers",id));
-    };
+    function download(filename, blob){
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+    }
+
+    exportCsvBtn.addEventListener('click', ()=>{
+      if(!viewItems.length) return alert('ไม่มีข้อมูล');
+      const cols = getSelectedCols();
+      const header = cols.join(',');
+      const rows = viewItems.map(c=> mapRow(c, cols).map(v=>{
+        v = (v??'').toString();
+        return /[",\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v;
+      }).join(',')).join('\n');
+      const csv = header + '\n' + rows;
+      download(`report-${new Date().toISOString().slice(0,10)}.csv`, new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+    });
+
+    exportJsonBtn.addEventListener('click', ()=>{
+      if(!viewItems.length) return alert('ไม่มีข้อมูล');
+      const cols = getSelectedCols();
+      const arr = viewItems.map(c=>{
+        const o={}; cols.forEach(k=>{ o[k] = (k==='date'? fmtTH(c.date) : c[k] ?? ''); }); return o;
+      });
+      download(`report-${new Date().toISOString().slice(0,10)}.json`, new Blob([JSON.stringify(arr,null,2)],{type:'application/json'}));
+    });
+
+    // Excel (XLSX แบบง่าย – สร้างเป็น HTML table ใส่ MIME Excel)
+    exportXlsxBtn.addEventListener('click', ()=>{
+      if(!viewItems.length) return alert('ไม่มีข้อมูล');
+      const cols = getSelectedCols();
+      const th = cols.map(c=>`<th style="border:1px solid #ccc;padding:6px;text-align:left">${c}</th>`).join('');
+      const trs = viewItems.map(c=>{
+        const tds = mapRow(c, cols).map(v=>`<td style="border:1px solid #ccc;padding:6px">${(v??'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td>`).join('');
+        return `<tr>${tds}</tr>`;
+      }).join('');
+      const html = `<table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
+      download(`report-${new Date().toISOString().slice(0,10)}.xls`, new Blob([html],{type:'application/vnd.ms-excel'}));
+    });
   </script>
 </body>
 </html>
