@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>หลังบ้าน — รายการลูกค้า</title>
+  <title>หลังบ้าน — รายการลูกค้า + Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
@@ -45,19 +45,18 @@
 
   <!-- ===== Main ===== -->
   <main class="flex-1 p-6">
-    <!-- Top -->
+    <!-- Header -->
     <div class="mb-4">
       <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
         <span>📊</span> รายงานลูกค้า
       </h2>
-      <p class="text-gray-600">พื้นที่นี้จะแสดงข้อมูล/สรุปตามที่เลือกจากเมนูด้านซ้าย</p>
+      <p class="text-gray-600">เลือกตัวกรอง → เลือกคอลัมน์ใน Report → Export</p>
     </div>
 
-    <!-- Search / Filters -->
+    <!-- Filters -->
     <section class="bg-white rounded-xl shadow p-4 mb-4">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
-        <input id="qText" type="text" placeholder="ค้นหาด้วยชื่อ/เบอร์/หมายเหตุ"
-               class="border rounded-lg px-3 py-2 w-full">
+        <input id="qText" type="text" placeholder="ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ" class="border rounded-lg px-3 py-2 w-full">
         <select id="fStatus" class="border rounded-lg px-3 py-2 w-full">
           <option value="">ทุกสถานะ</option>
           <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
@@ -81,17 +80,40 @@
       </div>
     </section>
 
-    <!-- List -->
-    <section id="listWrap" class="space-y-3">
-      <!-- rows append here -->
+    <!-- Report (เลือกคอลัมน์ + Export) -->
+    <section class="bg-white rounded-xl shadow p-4 mb-4">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-gray-800">Report — เลือกคอลัมน์ที่ต้องการส่งออก</h3>
+        <div class="text-sm text-gray-500">ใช้ข้อมูลจาก “ผลลัพธ์ที่คัดกรอง”</div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 text-sm">
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="date" checked> วันที่</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="name" checked> ชื่อ</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="phone" checked> เบอร์</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="gender" checked> เพศ</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="age" checked> อายุ</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="roomType" checked> ห้อง</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="price" checked> ราคา</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="decision" checked> สถานะ</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="disease"> โรคประจำตัว</label>
+        <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="specialCare"> การดูแลพิเศษ</label>
+      </div>
+      <div class="mt-3 flex items-center gap-2">
+        <button id="btnExportCsv" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export CSV</button>
+        <button id="btnExportJson" class="bg-emerald-500/90 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export JSON</button>
+        <span class="text-sm text-gray-500">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</span>
+      </div>
     </section>
+
+    <!-- List (การ์ดแนวนอน) -->
+    <section id="listWrap" class="space-y-3"></section>
   </main>
 
   <!-- ===== Scripts ===== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import {
-      getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, signInWithEmailAndPassword
+      getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import {
       getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, deleteDoc
@@ -123,6 +145,11 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=>location.href='index.html'));
 
+    // Report export
+    document.getElementById('btnExportCsv').addEventListener('click', ()=> exportSelected('csv'));
+    document.getElementById('btnExportJson').addEventListener('click', ()=> exportSelected('json'));
+    const colPickEls = ()=> Array.from(document.querySelectorAll('.colPick:checked')).map(i=>i.value);
+
     // State
     let isAdmin=false, isStaff=false;
     let rawItems = [];
@@ -130,38 +157,27 @@
 
     const fmtDateTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
     const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
+    const escapeHTML=(s)=>(s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 
-    // Auth flow
+    // Auth
     onAuthStateChanged(auth, async (user)=>{
-      if(!user){
-        // ถ้าอยากให้เด้งไปหน้า login แยก, เปลี่ยนเป็น location.href
-        // สำหรับทดสอบ สามารถ signIn ตรงนี้ได้ (ลบออกเมื่อโปรดักชัน)
-        // await signInWithEmailAndPassword(auth, "admin@example.com", "yourPass");
-        alert('ต้องล็อกอินเพื่อเข้าหลังบ้าน'); location.href='index.html'; return;
-      }
+      if(!user){ alert('ต้องล็อกอินเพื่อเข้าหลังบ้าน'); location.href='index.html'; return; }
       userEmailEl.textContent = user.email || user.uid;
 
-      // อ่าน role
       const r = await getDoc(doc(db,'roles',user.uid));
       const role = r.exists()? (r.data().role || 'viewer') : 'viewer';
       isAdmin = role==='admin';
       isStaff = role==='staff';
       roleBadgeEl.textContent = 'role: ' + role;
 
-      if(!(isAdmin||isStaff)){
-        alert('บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าหลังบ้าน (ต้องเป็น admin หรือ staff)'); await signOut(auth); location.href='index.html'; return;
-      }
+      if(!(isAdmin||isStaff)){ alert('บัญชีนี้ยังไม่ได้รับสิทธิ์เข้าหลังบ้าน'); await signOut(auth); location.href='index.html'; return; }
 
-      // subscribe customers
       const qy = query(collection(db,'customers'), orderBy('createdAt','desc'));
       onSnapshot(qy, snap=>{
         rawItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
         countAllEl.textContent = rawItems.length;
         applyFilters();
-      }, err=>{
-        console.error(err);
-        alert('อ่านข้อมูลไม่สำเร็จ: ' + (err.message||err.code));
-      });
+      }, err=> alert('อ่านข้อมูลไม่สำเร็จ: ' + (err.message||err.code)));
     });
 
     function applyFilters(){
@@ -171,9 +187,8 @@
         if (fRoom.value   && (c.roomType||'') !== fRoom.value)   return false;
         if (fGender.value && (c.gender||'')   !== fGender.value) return false;
         if (kw){
-          const hay = [
-            c.name, c.phone, c.decision, c.roomType, c.disease, c.specialCare
-          ].map(x=>(x||'').toString().toLowerCase()).join(' ');
+          const hay = [c.name,c.phone,c.decision,c.roomType,c.disease,c.specialCare]
+            .map(x=>(x||'').toString().toLowerCase()).join(' ');
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -182,27 +197,39 @@
       renderList(shownItems);
     }
 
+    // ===== List in horizontal cards =====
     function renderList(items){
       if (!items.length){
-        listWrap.innerHTML = `
-          <div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">ยังไม่มีข้อมูล</div>
-        `;
+        listWrap.innerHTML = `<div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">ยังไม่มีข้อมูล</div>`;
         return;
       }
-      listWrap.innerHTML = items.map((c,i)=>`
+      listWrap.innerHTML = items.map((c)=>`
         <article class="bg-white rounded-xl shadow p-4">
-          <div class="flex flex-wrap items-center gap-3 justify-between">
-            <div class="flex-1 min-w-[220px]">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <!-- left: name & phone -->
+            <div class="min-w-[260px]">
               <div class="text-sm text-gray-500">${fmtDateTH(c.date)}</div>
-              <div class="text-lg font-semibold text-gray-800">${escapeHTML(c.name||'-')}</div>
-              <div class="text-sm text-gray-600">เบอร์: ${escapeHTML(c.phone||'-')}</div>
+              <div class="text-xl font-semibold text-gray-800">${escapeHTML(c.name||'-')}</div>
+              <div class="text-sm text-gray-600">📞 ${escapeHTML(c.phone||'-')}</div>
             </div>
-            <div class="min-w-[200px] text-sm text-gray-700">
-              <div>เพศ/อายุ: ${escapeHTML(c.gender||'-')} / ${c.age??'-'} ปี</div>
-              <div>ห้อง: ${escapeHTML(c.roomType||'-')}</div>
-              <div>ราคา: ฿${fmtNum(c.price||0)}</div>
-              <div>สถานะ: ${escapeHTML(c.decision||'-')}</div>
+
+            <!-- middle: badges displayed HORIZONTALLY -->
+            <div class="flex flex-wrap items-center gap-2 text-sm">
+              <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                เพศ/อายุ: ${escapeHTML(c.gender||'-')} / ${c.age??'-'} ปี
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200">
+                ห้อง: ${escapeHTML(c.roomType||'-')}
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                ราคา: ฿${fmtNum(c.price||0)}
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                สถานะ: ${escapeHTML(c.decision||'-')}
+              </span>
             </div>
+
+            <!-- right: actions -->
             <div class="flex items-center gap-2">
               <button class="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50" onclick="viewDetail('${c.id}')">👁️ ดูรายละเอียด</button>
               ${isAdmin? `<button class="px-3 py-2 text-sm rounded-lg bg-rose-500 text-white hover:bg-rose-600" onclick="removeItem('${c.id}')">🗑️ ลบ</button>`:''}
@@ -212,7 +239,7 @@
       `).join('');
     }
 
-    // actions for buttons (expose to window)
+    // detail & delete
     window.viewDetail = (id)=>{
       const c = shownItems.find(x=>x.id===id) || rawItems.find(x=>x.id===id);
       if(!c) return;
@@ -230,15 +257,48 @@
       ].join('\n');
       alert(txt);
     };
-
     window.removeItem = async (id)=>{
       if(!isAdmin) return alert('ลบได้เฉพาะ admin');
-      if(confirm('ยืนยันลบลูกค้ารายการนี้?')){
-        await deleteDoc(doc(db,'customers',id));
-      }
+      if(confirm('ยืนยันลบลูกค้ารายการนี้?')){ await deleteDoc(doc(db,'customers',id)); }
     };
 
-    function escapeHTML(s){ return (s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    // ===== Export helper =====
+    function exportSelected(type){
+      if (!shownItems.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
+      const cols = colPickEls();
+      if (!cols.length) return alert('โปรดเลือกคอลัมน์อย่างน้อย 1 รายการ');
+
+      const mapRow = (c)=>({
+        date: fmtDateTH(c.date),
+        name: c.name||'',
+        phone: c.phone||'',
+        gender: c.gender||'',
+        age: c.age??'',
+        roomType: c.roomType||'',
+        price: c.price??'',
+        decision: c.decision||'',
+        disease: c.disease||'',
+        specialCare: c.specialCare||'',
+      });
+
+      const rows = shownItems.map(mapRow).map(r=>{
+        const obj={}; cols.forEach(k=>obj[k]=r[k]); return obj;
+      });
+
+      if (type==='json'){
+        const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), columns:cols, items:rows }, null, 2)], {type:'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report-${new Date().toISOString().slice(0,10)}.json`; a.click();
+        return;
+      }
+
+      // CSV
+      const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+      const header = cols;
+      const csvRows = rows.map(r=> cols.map(k=>toCsvCell(r[k])).join(','));
+      const csv = [header.join(','), ...csvRows].join('\n');
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    }
   </script>
 </body>
 </html>
