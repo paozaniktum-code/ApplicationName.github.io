@@ -5,89 +5,120 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>รายงานลูกค้า</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script><!-- ไม่ใช้กราฟ แค่กัน warning imports บางธีม -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
-    body{font-family:'Sarabun',sans-serif}
+    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
     .chip{background:#eef2ff;color:#3730a3;padding:.35rem .7rem;border-radius:9999px;font-size:.85rem}
     .pill{background:#e0f2fe;color:#0369a1;border-radius:9999px;padding:.45rem .8rem}
     .chip-warn{background:#fef3c7;color:#92400e}
     .btn{border-radius:.75rem;padding:.6rem 1rem;font-weight:600}
+    /* Sidebar */
+    .sidebar{width:260px;min-height:100vh}
+    .nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;border-radius:.75rem}
+    .nav-item.active{background:#e0f2fe;color:#075985;font-weight:700}
+    .nav-item:hover{background:#eaf6ff}
   </style>
 </head>
-<body class="bg-sky-50 min-h-screen">
-
-  <!-- Header -->
-  <header class="bg-white border-b">
-    <div class="max-w-6xl mx-auto px-4 py-4">
-      <h1 class="text-2xl font-bold flex items-center gap-2">📚 รายงานลูกค้า</h1>
-      <p class="text-sm text-gray-500">เลือกตัวกรอง → เลือกคอลัมน์ → ส่งออก / จัดการรายการ</p>
-    </div>
-  </header>
-
-  <main class="max-w-6xl mx-auto px-4 py-6">
-    <!-- Filter bar (ไม่มี sidebar) -->
-    <section class="bg-white rounded-xl shadow p-4 mb-4">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-        <div class="lg:col-span-5">
-          <input id="qText" type="text" placeholder="ค้นหาชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
-                 class="w-full border rounded-lg px-4 py-2.5 focus:ring focus:ring-blue-200"/>
-        </div>
-        <div class="lg:col-span-2">
-          <select id="qStatus" class="w-full border rounded-lg px-3 py-2.5">
-            <option value="">ทุกสถานะ</option>
-            <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
-            <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
-            <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
-          </select>
-        </div>
-        <div class="lg:col-span-2">
-          <select id="qRoom" class="w-full border rounded-lg px-3 py-2.5">
-            <option value="">ทุกห้อง</option>
-            <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
-            <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option><option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
-          </select>
-        </div>
-        <div class="lg:col-span-2">
-          <select id="qGender" class="w-full border rounded-lg px-3 py-2.5">
-            <option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option>
-          </select>
-        </div>
-        <div class="lg:col-span-1 flex gap-2">
-          <button id="btnApply" class="btn bg-indigo-600 hover:bg-indigo-700 text-white w-full">ใช้ตัวกรอง</button>
-        </div>
-        <div class="lg:col-span-12 flex items-center justify-end gap-3 text-sm text-gray-600">
-          <button id="btnClear" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800">ล้างค่า</button>
-          <span class="ml-auto">ทั้งหมด: <b id="allCount">0</b> • แสดงผล: <b id="showCount">0</b></span>
+<body class="bg-sky-50">
+  <div class="flex">
+    <!-- Sidebar (ฟ้าอ่อน) -->
+    <aside class="sidebar bg-sky-100 border-r border-sky-200 p-4 flex flex-col">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-sky-300 text-white flex items-center justify-center font-bold">A</div>
+        <div>
+          <div class="font-bold">App Admin</div>
+          <div id="sbRole" class="text-xs text-sky-700">ผู้ใช้: -</div>
         </div>
       </div>
-    </section>
 
-    <!-- Report columns + Export -->
-    <section class="bg-white rounded-xl shadow p-4 mb-6">
-      <div class="text-lg font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[15px] mb-3">
-        <label><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
-        <label><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
-        <label><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
-        <label><input class="colChk" type="checkbox" value="gender"> เพศ</label>
-        <label><input class="colChk" type="checkbox" value="age"> อายุ</label>
-        <label><input class="colChk" type="checkbox" value="price"> ราคา</label>
-        <label><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
-        <label><input class="colChk" type="checkbox" value="decision" checked> สถานะ</label>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button id="btnCsv"  class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export CSV</button>
-        <button id="btnJson" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export JSON</button>
-        <button id="btnXlsx" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export Excel</button>
-      </div>
-      <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่ถูกติ๊กจะใช้ตอนส่งออก</p>
-    </section>
+      <div class="text-xs text-sky-900 mb-2">เมนู</div>
+      <nav class="space-y-2">
+        <button id="mList"   class="nav-item active w-full text-left">📋 รายการลูกค้า</button>
+        <button id="mSearch" class="nav-item w-full text-left">🔎 ค้นหา/สรุป</button>
+      </nav>
 
-    <!-- Results -->
-    <section id="result" class="space-y-3"></section>
-  </main>
+      <div class="mt-auto pt-4 border-t border-sky-200">
+        <button id="btnLogout" class="w-full btn bg-rose-500 hover:bg-rose-600 text-white">ออกจากระบบ</button>
+        <div class="text-xs text-sky-700 mt-3">© 2025 YourBrand</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 min-h-screen">
+      <!-- Header -->
+      <header class="bg-white border-b">
+        <div class="max-w-6xl mx-auto px-5 py-4">
+          <h1 class="text-2xl font-bold flex items-center gap-2">📚 รายงานลูกค้า</h1>
+          <p class="text-sm text-gray-500">เลือกตัวกรอง → เลือกคอลัมน์ → ส่งออก / จัดการรายการ</p>
+        </div>
+      </header>
+
+      <div class="max-w-6xl mx-auto px-5 py-6 space-y-5">
+        <!-- Filter / Search (ใช้กับทั้ง 2 แท็บ) -->
+        <section class="bg-white rounded-xl shadow p-4">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+            <div class="lg:col-span-5">
+              <input id="qText" type="text" placeholder="ค้นหาชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
+                     class="w-full border rounded-lg px-4 py-2.5 focus:ring focus:ring-blue-200"/>
+            </div>
+            <div class="lg:col-span-2">
+              <select id="qStatus" class="w-full border rounded-lg px-3 py-2.5">
+                <option value="">ทุกสถานะ</option>
+                <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+                <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+                <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
+              </select>
+            </div>
+            <div class="lg:col-span-2">
+              <select id="qRoom" class="w-full border rounded-lg px-3 py-2.5">
+                <option value="">ทุกห้อง</option>
+                <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
+                <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
+                <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
+              </select>
+            </div>
+            <div class="lg:col-span-2">
+              <select id="qGender" class="w-full border rounded-lg px-3 py-2.5">
+                <option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option>
+              </select>
+            </div>
+            <div class="lg:col-span-1 flex gap-2">
+              <button id="btnApply" class="btn bg-indigo-600 hover:bg-indigo-700 text-white w-full">ใช้ตัวกรอง</button>
+            </div>
+            <div class="lg:col-span-12 flex items-center justify-end gap-3 text-sm text-gray-600">
+              <button id="btnClear" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800">ล้างค่า</button>
+              <span class="ml-auto">ทั้งหมด: <b id="allCount">0</b> • แสดงผล: <b id="showCount">0</b></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Report columns + export -->
+        <section class="bg-white rounded-xl shadow p-4">
+          <div class="text-lg font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[15px] mb-3">
+            <label><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
+            <label><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
+            <label><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
+            <label><input class="colChk" type="checkbox" value="gender"> เพศ</label>
+            <label><input class="colChk" type="checkbox" value="age"> อายุ</label>
+            <label><input class="colChk" type="checkbox" value="price"> ราคา</label>
+            <label><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
+            <label><input class="colChk" type="checkbox" value="decision" checked> สถานะ</label>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnCsv"  class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export CSV</button>
+            <button id="btnJson" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export JSON</button>
+            <button id="btnXlsx" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export Excel</button>
+          </div>
+          <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่ถูกติ๊กจะใช้ตอนส่งออก</p>
+        </section>
+
+        <!-- Results: รายการลูกค้า / ค้นหา-สรุป ใช้ผลกรองเดียวกัน -->
+        <section id="listWrap" class="space-y-3"></section>
+      </div>
+    </main>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
@@ -96,51 +127,67 @@
       deleteDoc, doc, getDoc
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import {
-      getAuth, onAuthStateChanged, signInWithEmailAndPassword
+      getAuth, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
     // --- Init ---
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
-    const auth = getAuth(app);
+    const auth= getAuth(app);
 
-    // ------ Admin gate (ลบได้เฉพาะ admin) ------
+    // --- Sidebar tabs (UI เท่านั้น; ใช้ dataset ชุดเดียว) ---
+    const mList   = document.getElementById('mList');
+    const mSearch = document.getElementById('mSearch');
+    function setTab(btn){
+      [mList,mSearch].forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      // ทั้งสองแท็บแสดงผลจาก viewItems เดียวกัน ดังนั้นไม่ต้องสลับส่วนแสดงผล
+    }
+    mList.onclick=()=>setTab(mList);
+    mSearch.onclick=()=>setTab(mSearch);
+
+    // --- Logout (ซ้ายล่าง) ---
+    document.getElementById('btnLogout').onclick = ()=> signOut(auth);
+
+    // --- Role for delete button ---
     let isAdmin = false;
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return; // ยังไม่ล็อกอินก็แสดงได้ แต่ปุ่มลบจะถูกซ่อนไว้
+    onAuthStateChanged(auth, async (user)=>{
+      const sbRole = document.getElementById('sbRole');
+      if (!user){ sbRole.textContent='ผู้ใช้: -'; isAdmin=false; render(); return; }
+      sbRole.textContent = user.email || user.uid;
       try{
         const r = await getDoc(doc(db,'roles',user.uid));
         isAdmin = r.exists() && r.data().role === 'admin';
-        renderList(); // อัพเดทปุ่มลบ
-      }catch(e){ console.warn('อ่าน role ไม่สำเร็จ', e); }
+      }catch(e){ console.warn('อ่าน role ไม่สำเร็จ', e); isAdmin=false; }
+      render();
     });
 
-    // ------ Refs ------
-    const qText   = document.getElementById('qText');
-    const qStatus = document.getElementById('qStatus');
-    const qRoom   = document.getElementById('qRoom');
-    const qGender = document.getElementById('qGender');
-    const btnApply= document.getElementById('btnApply');
-    const btnClear= document.getElementById('btnClear');
-    const allCount= document.getElementById('allCount');
-    const showCount= document.getElementById('showCount');
-    const resultEl= document.getElementById('result');
+    // --- Data ---
+    let allItems = [];
+    let viewItems = [];
 
     const fmtTH = s => { const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
     const fmtNum = n => new Intl.NumberFormat('th-TH').format(n||0);
 
-    let allItems = [];
-    let viewItems = [];
-
-    // ------ Live data ------
     onSnapshot(query(collection(db,'customers'), orderBy('createdAt','desc')), snap=>{
       allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      allCount.textContent = allItems.length;
+      document.getElementById('allCount').textContent = allItems.length;
       applyFilter();
     });
 
-    // ------ Filter ------
+    // --- Filters ---
+    const qText   = document.getElementById('qText');
+    const qStatus = document.getElementById('qStatus');
+    const qRoom   = document.getElementById('qRoom');
+    const qGender = document.getElementById('qGender');
+
+    document.getElementById('btnApply').onclick = applyFilter;
+    document.getElementById('btnClear').onclick = ()=>{
+      qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value='';
+      applyFilter();
+    };
+
     function applyFilter(){
       const kw = qText.value.trim().toLowerCase();
       const st = qStatus.value, rm = qRoom.value, gd = qGender.value;
@@ -157,25 +204,24 @@
         if (gd && (c.gender||'') !== gd) return false;
         return true;
       });
-      showCount.textContent = viewItems.length;
-      renderList();
+      document.getElementById('showCount').textContent = viewItems.length;
+      render();
     }
-    btnApply.onclick = applyFilter;
-    btnClear.onclick = ()=>{ qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value=''; applyFilter(); };
 
-    // ------ Render ------
-    function renderList(){
+    // --- Render list ---
+    function render(){
+      const wrap = document.getElementById('listWrap');
       if (!viewItems.length){
-        resultEl.innerHTML = `<div class="bg-white rounded-xl shadow p-6 text-gray-500">ยังไม่มีข้อมูล</div>`;
+        wrap.innerHTML = `<div class="bg-white rounded-xl shadow p-6 text-gray-500">ยังไม่มีข้อมูล</div>`;
         return;
       }
-      resultEl.innerHTML = viewItems.map(c=>`
+      wrap.innerHTML = viewItems.map(c=>`
         <div class="bg-white rounded-xl shadow p-4">
           <div class="flex justify-between items-start gap-3">
             <div>
               <div class="text-sm text-gray-500">${fmtTH(c.date)}</div>
               <div class="text-xl font-semibold">${c.name||'-'}</div>
-              <div class="flex flex-wrap gap-2 mt-2">
+              <div class="flex flex-wrap gap-2 mt-2 items-center">
                 <a href="tel:${c.phone||''}" class="pill">📞 ${c.phone||'-'}</a>
                 <span class="chip">เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี</span>
                 <span class="chip">ห้อง: ${c.roomType||'-'}</span>
@@ -193,50 +239,50 @@
       if (confirm('ยืนยันการลบรายการนี้?')) await deleteDoc(doc(db,'customers',id));
     };
 
-    // ------ Export helpers ------
-    const pickCols = () => Array.from(document.querySelectorAll('.colChk:checked')).map(el=>el.value);
-    const shape = (items, cols) => items.map(c=>{
-      const row = {};
-      cols.forEach(k=>{
-        let v = c[k];
+    // --- Export ---
+    const pickCols = ()=> Array.from(document.querySelectorAll('.colChk:checked')).map(el=>el.value);
+    const shape = (items, cols)=> items.map(c=>{
+      const row={}; cols.forEach(k=>{
+        let v=c[k];
         if (k==='date') v = fmtTH(c.date);
         if (k==='price') v = Number(c.price||0);
-        row[k] = (v ?? '');
-      });
-      return row;
+        row[k]=v??'';
+      }); return row;
     });
 
     document.getElementById('btnCsv').onclick = ()=>{
       if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols = pickCols(), rows = shape(viewItems, cols);
-      const csv = [cols.join(',')].concat(rows.map(r=>cols.map(k=>{
-        const s = (r[k]??'').toString().replace(/"/g,'""');
-        return /[",\n]/.test(s) ? `"${s}"` : s;
-      }).join(','))).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const a = Object.assign(document.createElement('a'), {
-        href: URL.createObjectURL(blob),
-        download: `report-${new Date().toISOString().slice(0,10)}.csv`
-      }); a.click();
+      const cols=pickCols(), rows=shape(viewItems,cols);
+      const head=cols.join(',');
+      const lines = rows.map(r=>cols.map(k=>{
+        const s=(r[k]??'').toString().replace(/"/g,'""');
+        return /[",\n]/.test(s)?`"${s}"`:s;
+      }).join(','));
+      const csv=[head,...lines].join('\n');
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`report-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
     };
 
     document.getElementById('btnJson').onclick = ()=>{
       if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols = pickCols(), rows = shape(viewItems, cols);
-      const blob = new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
-      const a = Object.assign(document.createElement('a'), {
-        href: URL.createObjectURL(blob),
-        download: `report-${new Date().toISOString().slice(0,10)}.json`
-      }); a.click();
+      const cols=pickCols(), rows=shape(viewItems,cols);
+      const blob=new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=`report-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
     };
 
     document.getElementById('btnXlsx').onclick = ()=>{
       if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols = pickCols(), rows = shape(viewItems, cols);
-      const ws = XLSX.utils.json_to_sheet(rows, {header: cols});
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Report');
-      XLSX.writeFile(wb, `report-${new Date().toISOString().slice(0,10)}.xlsx`);
+      const cols=pickCols(), rows=shape(viewItems,cols);
+      const ws=XLSX.utils.json_to_sheet(rows,{header:cols});
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Report');
+      XLSX.writeFile(wb,`report-${new Date().toISOString().slice(0,10)}.xlsx`);
     };
   </script>
 </body>
