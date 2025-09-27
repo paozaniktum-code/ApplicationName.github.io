@@ -1,4 +1,4 @@
-<!-- admin-report.html -->
+<!-- admin-report.html (updated: Excel + tel:) -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>หลังบ้าน — รายการลูกค้า + Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
     *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
@@ -45,7 +47,6 @@
 
   <!-- ===== Main ===== -->
   <main class="flex-1 p-6">
-    <!-- Header -->
     <div class="mb-4">
       <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
         <span>📊</span> รายงานลูกค้า
@@ -80,7 +81,7 @@
       </div>
     </section>
 
-    <!-- Report (เลือกคอลัมน์ + Export) -->
+    <!-- Report -->
     <section class="bg-white rounded-xl shadow p-4 mb-4">
       <div class="flex items-center justify-between mb-2">
         <h3 class="font-semibold text-gray-800">Report — เลือกคอลัมน์ที่ต้องการส่งออก</h3>
@@ -98,26 +99,22 @@
         <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="disease"> โรคประจำตัว</label>
         <label class="inline-flex items-center gap-2"><input class="colPick" type="checkbox" value="specialCare"> การดูแลพิเศษ</label>
       </div>
-      <div class="mt-3 flex items-center gap-2">
+      <div class="mt-3 flex items-center gap-2 flex-wrap">
         <button id="btnExportCsv" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export CSV</button>
         <button id="btnExportJson" class="bg-emerald-500/90 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export JSON</button>
+        <button id="btnExportXlsx" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export Excel</button>
         <span class="text-sm text-gray-500">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</span>
       </div>
     </section>
 
-    <!-- List (การ์ดแนวนอน) -->
+    <!-- List -->
     <section id="listWrap" class="space-y-3"></section>
   </main>
 
-  <!-- ===== Scripts ===== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import {
-      getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, deleteDoc
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
     // Init
@@ -145,9 +142,10 @@
     });
     document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth).then(()=>location.href='index.html'));
 
-    // Report export
+    // Export buttons
     document.getElementById('btnExportCsv').addEventListener('click', ()=> exportSelected('csv'));
     document.getElementById('btnExportJson').addEventListener('click', ()=> exportSelected('json'));
+    document.getElementById('btnExportXlsx').addEventListener('click', ()=> exportSelected('excel'));
     const colPickEls = ()=> Array.from(document.querySelectorAll('.colPick:checked')).map(i=>i.value);
 
     // State
@@ -158,8 +156,9 @@
     const fmtDateTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
     const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
     const escapeHTML=(s)=>(s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    const telHref=(p)=>{ const digits=(p||'').toString().replace(/[^\d+]/g,''); return digits?`tel:${digits}`:'#'; };
 
-    // Auth
+    // Auth & data
     onAuthStateChanged(auth, async (user)=>{
       if(!user){ alert('ต้องล็อกอินเพื่อเข้าหลังบ้าน'); location.href='index.html'; return; }
       userEmailEl.textContent = user.email || user.uid;
@@ -197,7 +196,7 @@
       renderList(shownItems);
     }
 
-    // ===== List in horizontal cards =====
+    // ===== List (horizontal cards) with tel link =====
     function renderList(items){
       if (!items.length){
         listWrap.innerHTML = `<div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">ยังไม่มีข้อมูล</div>`;
@@ -206,14 +205,16 @@
       listWrap.innerHTML = items.map((c)=>`
         <article class="bg-white rounded-xl shadow p-4">
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <!-- left: name & phone -->
             <div class="min-w-[260px]">
               <div class="text-sm text-gray-500">${fmtDateTH(c.date)}</div>
               <div class="text-xl font-semibold text-gray-800">${escapeHTML(c.name||'-')}</div>
-              <div class="text-sm text-gray-600">📞 ${escapeHTML(c.phone||'-')}</div>
+              <div class="text-sm text-gray-600">
+                <a class="inline-flex items-center gap-2 hover:text-blue-700" href="${telHref(c.phone)}">
+                  <span>📞</span><span>${escapeHTML(c.phone||'-')}</span>
+                </a>
+              </div>
             </div>
 
-            <!-- middle: badges displayed HORIZONTALLY -->
             <div class="flex flex-wrap items-center gap-2 text-sm">
               <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                 เพศ/อายุ: ${escapeHTML(c.gender||'-')} / ${c.age??'-'} ปี
@@ -229,7 +230,6 @@
               </span>
             </div>
 
-            <!-- right: actions -->
             <div class="flex items-center gap-2">
               <button class="px-3 py-2 text-sm rounded-lg border hover:bg-gray-50" onclick="viewDetail('${c.id}')">👁️ ดูรายละเอียด</button>
               ${isAdmin? `<button class="px-3 py-2 text-sm rounded-lg bg-rose-500 text-white hover:bg-rose-600" onclick="removeItem('${c.id}')">🗑️ ลบ</button>`:''}
@@ -262,7 +262,7 @@
       if(confirm('ยืนยันลบลูกค้ารายการนี้?')){ await deleteDoc(doc(db,'customers',id)); }
     };
 
-    // ===== Export helper =====
+    // ===== Export helper (CSV / JSON / Excel) =====
     function exportSelected(type){
       if (!shownItems.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
       const cols = colPickEls();
@@ -288,6 +288,15 @@
       if (type==='json'){
         const blob = new Blob([JSON.stringify({ exportedAt:new Date().toISOString(), columns:cols, items:rows }, null, 2)], {type:'application/json'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `report-${new Date().toISOString().slice(0,10)}.json`; a.click();
+        return;
+      }
+
+      if (type==='excel'){
+        // Build worksheet and workbook
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Report");
+        XLSX.writeFile(wb, `report-${new Date().toISOString().slice(0,10)}.xlsx`);
         return;
       }
 
