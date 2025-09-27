@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AppzStory Admin — Template (Light Blue)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
+    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
+    /* หิมะโทนฟ้าอ่อน */
+    .snow:before,.snow:after{
+      content:""; position:fixed; inset:0; pointer-events:none;
+      background-image:
+        radial-gradient(rgba(56,189,248,.9) 1px, transparent 2px),
+        radial-gradient(rgba(125,211,252,.9) 1px, transparent 2px);
+      background-size: 6px 6px, 8px 8px;
+      background-position: 0 0, 50px 50px; opacity:.18; animation: drift 32s linear infinite;
+    }
+    .snow:after{ animation-duration: 48s; opacity:.12; }
+    @keyframes drift{ from{ transform:translateY(-12px) } to{ transform:translateY(12px) } }
+    ::-webkit-scrollbar{ height:8px; width:8px } 
+    ::-webkit-scrollbar-thumb{ background:#cfe8fb; border-radius:999px }
+  </style>
+</head>
+<body class="bg-sky-50 snow text-slate-800">
+  <!-- Topbar -->
+  <header class="fixed inset-x-0 top-0 h-14 bg-white/90 backdrop-blur border-b border-sky-100 z-40">
+    <div class="h-full flex items-center justify-between px-4">
+      <div class="flex items-center gap-3">
+        <button id="btnMenu" class="md:hidden p-2 rounded hover:bg-sky-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-sky-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-sky-500 text-white grid place-items-center font-bold shadow-sm">A</div>
+          <span class="font-bold text-sky-800">AppzStory Admin</span>
+        </div>
+      </div>
+      <div class="text-xs sm:text-sm text-sky-600">เข้าสู่ระบบครั้งล่าสุด: 2021-06-01 20:00:00</div>
+    </div>
+  </header>
+
+  <div class="pt-14 flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed md:static z-30 inset-y-14 left-0 w-64 bg-sky-700 text-white transition-transform -translate-x-full md:translate-x-0">
+      <div class="h-full flex flex-col">
+        <div class="px-4 py-3 border-b border-sky-600 flex items-center gap-3 bg-sky-700/95">
+          <div class="w-8 h-8 rounded-full bg-white/15 grid place-items-center">👤</div>
+          <div>
+            <div class="text-sm font-semibold">ผู้ใช้ทดสอบ</div>
+            <div class="text-[11px] text-sky-200">ผู้ดูแลระบบ</div>
+          </div>
+        </div>
+        <nav class="px-2 py-3 space-y-1 text-sm">
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🏠 หน้าหลัก</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded bg-white/15" href="#">👥 ผู้ดูแลระบบ</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">📄 รายชื่อลูกค้า</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🛒 รายการสินค้า</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🧾 รายการสั่งซื้อ</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">👛 บัญชีของเรา</a>
+          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🚪 ออกจากระบบ</a>
+        </nav>
+        <div class="mt-auto px-4 py-3 text-[11px] text-sky-200/80">Copyright © 2021–2025 appzstory.dev</div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="flex-1 md:ml-0 w-full md:ml-64">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+        <div class="bg-white rounded-xl shadow-sm border border-sky-100">
+          <div class="px-5 py-4 border-b border-sky-100 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">👥</span>
+              <h2 class="font-bold text-sky-900">ผู้ดูแลระบบ</h2>
+            </div>
+            <button class="bg-sky-600 hover:bg-sky-700 text-white text-sm px-3 py-2 rounded-lg shadow-sm">+ เพิ่มข้อมูล</button>
+          </div>
+
+          <!-- Controls -->
+          <div class="px-5 py-4 flex items-center gap-3 flex-wrap text-sm">
+            <label class="flex items-center gap-2">แสดงข้อมูล
+              <select class="border border-sky-200 rounded px-2 py-1 text-sky-800 bg-white">
+                <option>10</option><option>25</option><option>50</option>
+              </select> แถว
+            </label>
+            <div class="ml-auto flex items-center gap-2">
+              <span class="text-sky-700">ค้นหา</span>
+              <input type="search" class="border border-sky-200 rounded px-3 py-1.5 w-60 focus:outline-none focus:ring-2 focus:ring-sky-300" placeholder="พิมพ์เพื่อค้นหา…">
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-sky-50 text-sky-900">
+                  <th class="px-4 py-2 text-left">ลำดับ</th>
+                  <th class="px-4 py-2 text-left">ชื่อผู้ใช้งาน</th>
+                  <th class="px-4 py-2 text-left">ชื่อจริง</th>
+                  <th class="px-4 py-2 text-left">นามสกุล</th>
+                  <th class="px-4 py-2 text-left">อีเมล</th>
+                  <th class="px-4 py-2 text-left">ใช้งานล่าสุด</th>
+                  <th class="px-4 py-2 text-left">สิทธิ์ที่ใช้งาน</th>
+                  <th class="px-4 py-2 text-left">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-sky-100">
+                <tr class="hover:bg-sky-50/70">
+                  <td class="px-4 py-2">1</td>
+                  <td class="px-4 py-2">admin</td>
+                  <td class="px-4 py-2">Yothin</td>
+                  <td class="px-4 py-2">Sapsamran</td>
+                  <td class="px-4 py-2">yothin@gmail.com</td>
+                  <td class="px-4 py-2">2020-10-01 20:50:40</td>
+                  <td class="px-4 py-2">
+                    <span class="inline-flex items-center text-[11px] px-2 py-1 rounded bg-sky-100 text-sky-700 border border-sky-200">superadmin</span>
+                  </td>
+                  <td class="px-4 py-2">
+                    <button class="text-xs bg-amber-400 hover:bg-amber-500 text-white px-3 py-1 rounded mr-2">แก้ไข</button>
+                    <button class="text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1 rounded">ลบ</button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-sky-50/70">
+                  <td class="px-4 py-2">2</td>
+                  <td class="px-4 py-2">admin2</td>
+                  <td class="px-4 py-2">AppzStory</td>
+                  <td class="px-4 py-2">Sapsamran</td>
+                  <td class="px-4 py-2">appzstory@gmail.com</td>
+                  <td class="px-4 py-2">2020-10-01 20:50:40</td>
+                  <td class="px-4 py-2">
+                    <span class="inline-flex items-center text-[11px] px-2 py-1 rounded bg-teal-50 text-teal-700 border border-teal-200">admin</span>
+                  </td>
+                  <td class="px-4 py-2">
+                    <button class="text-xs bg-amber-400 hover:bg-amber-500 text-white px-3 py-1 rounded mr-2">แก้ไข</button>
+                    <button class="text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1 rounded">ลบ</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Footer -->
+          <div class="px-5 py-4 flex items-center justify-between text-sm text-sky-700">
+            <div>แสดงหน้า 1 จาก 1</div>
+            <div class="flex items-center gap-2">
+              <button class="border border-sky-200 px-2 py-1 rounded hover:bg-sky-50">Previous</button>
+              <button class="border border-sky-200 px-2 py-1 rounded bg-sky-600 text-white">1</button>
+              <button class="border border-sky-200 px-2 py-1 rounded hover:bg-sky-50">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // toggle sidebar (มือถือ)
+    const btn = document.getElementById('btnMenu');
+    const sb  = document.getElementById('sidebar');
+    btn?.addEventListener('click', ()=>{
+      const hidden = sb.classList.contains('-translate-x-full');
+      sb.classList.toggle('-translate-x-full', !hidden);
+    });
+  </script>
+</body>
+</html>
