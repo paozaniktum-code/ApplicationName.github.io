@@ -3,33 +3,34 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>หลังบ้าน — รายงาน/จัดการลูกค้า</title>
+  <title>หลังบ้าน — จัดการ/ดูผลลัพธ์ลูกค้า</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
     *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
-    .modal-card{background:#fff;border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:520px;width:100%;padding:1.25rem}
-    .tab-active{border-color:#3b82f6;color:#1f2937}
+    .modal-card{background:#fff;border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:460px;width:100%;padding:1.25rem}
+    .tab-active{border-color:#3b82f6;color:#111827}
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-  <!-- Login -->
+  <!-- =================== LOGIN =================== -->
   <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
     <form id="loginForm" class="bg-white w-full max-w-sm p-6 rounded-2xl shadow">
       <h1 class="text-xl font-bold mb-4">🔒 เข้าสู่ระบบหลังบ้าน</h1>
       <input id="email" type="email" placeholder="อีเมล" class="border rounded-lg w-full px-3 py-2 mb-2" required />
       <input id="password" type="password" placeholder="รหัสผ่าน" class="border rounded-lg w-full px-3 py-2 mb-3" required />
       <button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5">เข้าสู่ระบบ</button>
-      <p id="loginError" class="text-red-600 text-sm mt-2 hidden"></p>
+      <p id="loginError" class="text-red-600 text-sm mt-3 hidden"></p>
+      <p class="text-xs text-gray-500 mt-2">หมายเหตุ: ต้องเปิด Email/Password ที่ Firebase Authentication และอนุญาตโดเมนที่ใช้งาน</p>
     </form>
   </div>
 
-  <!-- Dashboard -->
+  <!-- =================== DASHBOARD =================== -->
   <div id="dashboard" class="hidden">
     <header class="bg-white border-b">
       <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-        <h1 class="text-lg md:text-xl font-bold">📊 หลังบ้าน — รายการ/รายงานลูกค้า</h1>
+        <h1 class="text-lg md:text-xl font-bold">📋 หลังบ้าน — จัดการ/ค้นหาลูกค้า</h1>
         <div class="flex items-center gap-2">
           <span id="userBadge" class="text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">-</span>
           <button id="logoutBtn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
@@ -41,25 +42,20 @@
       <!-- Tabs -->
       <div class="mb-4 border-b">
         <nav class="flex gap-2">
-          <button id="tabList" class="px-4 py-2 border-b-2 tab-active">📋 รายการ</button>
-          <button id="tabReport" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">📈 รายงาน</button>
+          <button id="tabList" class="px-4 py-2 border-b-2 tab-active">📑 ข้อมูลลูกค้า</button>
+          <button id="tabFilter" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">🎯 ตัวกรอง/สรุป</button>
         </nav>
       </div>
 
-      <!-- ===== LIST PAGE ===== -->
+      <!-- ===== PAGE: รายการ + ค้นหา ===== -->
       <section id="pageList" class="bg-white rounded-xl shadow p-5">
-        <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <div class="flex items-center justify-between gap-3 mb-4">
           <div>
             <h2 class="text-xl font-bold">รายการลูกค้า</h2>
             <p class="text-sm text-gray-500">สิทธิ์ของคุณ: <b id="roleLabel">-</b></p>
           </div>
           <div class="flex items-center gap-2">
-            <div class="relative">
-              <input id="searchName" type="text" placeholder="🔍 ค้นหาชื่อ..." class="w-56 md:w-72 border rounded-lg px-3 py-2 pr-8">
-              <span class="absolute right-2 top-2.5 text-gray-400">⌕</span>
-            </div>
-            <button id="printBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm">🖨️ พิมพ์</button>
-            <button id="exportCsvBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm">⬇️ CSV</button>
+            <input id="searchName" type="search" placeholder="พิมพ์ชื่อเพื่อค้นหา…" class="border rounded-lg px-3 py-2 text-sm w-56">
             <span class="text-sm text-gray-600">ทั้งหมด: <b id="total">0</b> คน</span>
           </div>
         </div>
@@ -84,28 +80,18 @@
         </div>
       </section>
 
-      <!-- ===== REPORT PAGE (ตัวกรอง + ตัวเลขสรุป ไม่มีกราฟ) ===== -->
-      <section id="pageReport" class="hidden">
-        <!-- Filters -->
+      <!-- ===== PAGE: ตัวกรอง/สรุป (ไม่มีกราฟ) ===== -->
+      <section id="pageFilter" class="hidden">
         <div class="bg-white rounded-xl shadow p-5 mb-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xl font-bold">รายงาน & ตัวกรอง</h2>
-            <div class="text-sm text-gray-600">ข้อมูลทั้งหมด: <b id="countAll">0</b> รายการ</div>
-          </div>
+          <h2 class="text-xl font-bold mb-3">ตัวกรอง & ผลลัพธ์ตามหัวข้อ</h2>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div><label class="text-xs text-gray-500">วันที่เริ่ม</label><input id="fStart" type="date" class="w-full border rounded-lg px-3 py-2"></div>
             <div><label class="text-xs text-gray-500">วันที่สิ้นสุด</label><input id="fEnd" type="date" class="w-full border rounded-lg px-3 py-2"></div>
             <div><label class="text-xs text-gray-500">สถานะ</label><select id="fStatus" class="w-full border rounded-lg px-3 py-2">
               <option value="">ทั้งหมด</option>
-              <option>ใหม่</option>
-              <option>หาข้อมูลเปรียบเทียบ</option>
-              <option>ยังไม่ใช้บริการตอนนี้</option>
-              <option>รอตัดสินใจ</option>
-              <option>รอทางการแพทย์</option>
-              <option>รอดูสถานที่</option>
-              <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-              <option>ปิดการขายสำเร็จ</option>
-              <option>ยกเลิกการขาย</option>
+              <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+              <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+              <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
             </select></div>
             <div><label class="text-xs text-gray-500">ประเภทห้อง</label><select id="fRoom" class="w-full border rounded-lg px-3 py-2">
               <option value="">ทั้งหมด</option>
@@ -113,7 +99,9 @@
               <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
               <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
             </select></div>
-            <div><label class="text-xs text-gray-500">เพศ</label><select id="fGender" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ชาย</option><option>หญิง</option></select></div>
+            <div><label class="text-xs text-gray-500">เพศ</label><select id="fGender" class="w-full border rounded-lg px-3 py-2">
+              <option value="">ทั้งหมด</option><option>ชาย</option><option>หญิง</option>
+            </select></div>
             <div class="grid grid-cols-2 gap-2">
               <div><label class="text-xs text-gray-500">ราคา ≥</label><input id="fMin" type="number" class="w-full border rounded-lg px-3 py-2"></div>
               <div><label class="text-xs text-gray-500">ราคา ≤</label><input id="fMax" type="number" class="w-full border rounded-lg px-3 py-2"></div>
@@ -126,50 +114,56 @@
           </div>
         </div>
 
-        <!-- KPIs -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ทั้งหมด</div><div class="text-2xl font-bold" id="kAll">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ช่วงที่เลือก</div><div class="text-2xl font-bold" id="kPeriod">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">ปิดการขาย</div><div class="text-2xl font-bold" id="kWon">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Win Rate</div><div class="text-2xl font-bold" id="kWinRate">0%</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Avg. Price</div><div class="text-2xl font-bold" id="kAvgPrice">฿0</div></div>
+        <!-- สรุปแบบข้อความ (ไม่มีกราฟ) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-xs text-gray-500">Leads ทั้งหมด</div>
+            <div class="text-2xl font-bold" id="kAll">0</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-xs text-gray-500">Leads ช่วงที่เลือก</div>
+            <div class="text-2xl font-bold" id="kPeriod">0</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-xs text-gray-500">ปิดการขาย</div>
+            <div class="text-2xl font-bold" id="kWon">0</div>
+          </div>
+          <div class="bg-white rounded-xl shadow p-4">
+            <div class="text-xs text-gray-500">Avg. Price</div>
+            <div class="text-2xl font-bold" id="kAvgPrice">฿0</div>
+          </div>
+        </div>
+
+        <!-- ตารางผลลัพธ์ตามตัวกรอง -->
+        <div class="bg-white rounded-xl shadow p-4 mt-4">
+          <div class="font-semibold mb-2">ผลลัพธ์ตามเงื่อนไขที่เลือก</div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-100">
+                <th class="p-2 text-left">#</th>
+                <th class="p-2 text-left">ชื่อ</th>
+                <th class="p-2 text-left">วันที่</th>
+                <th class="p-2 text-left">เพศ/อายุ</th>
+                <th class="p-2 text-left">ห้อง</th>
+                <th class="p-2 text-left">ราคา</th>
+                <th class="p-2 text-left">สถานะ</th>
+              </tr></thead>
+              <tbody id="listFiltered"></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Modal: แก้สถานะ -->
-  <template id="statusModalTpl">
-    <div class="modal-backdrop">
-      <div class="modal-card">
-        <h3 class="text-lg font-bold mb-3">แก้ไขสถานะลูกค้า</h3>
-        <select id="modalStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
-          <option>ใหม่</option>
-          <option>หาข้อมูลเปรียบเทียบ</option>
-          <option>ยังไม่ใช้บริการตอนนี้</option>
-          <option>รอตัดสินใจ</option>
-          <option>รอทางการแพทย์</option>
-          <option>รอดูสถานที่</option>
-          <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-          <option>ปิดการขายสำเร็จ</option>
-          <option>ยกเลิกการขาย</option>
-        </select>
-        <div class="flex gap-2">
-          <button id="okBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5">บันทึก</button>
-          <button id="cancelBtn" class="flex-1 bg-gray-200 text-gray-800 rounded-lg py-2.5">ยกเลิก</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- Modal: รายละเอียดลูกค้า -->
+  <!-- Modal: รายละเอียดรายคน -->
   <template id="detailModalTpl">
     <div class="modal-backdrop">
       <div class="modal-card">
         <h3 class="text-lg font-bold mb-3">รายละเอียดลูกค้า</h3>
-        <div id="detailBody" class="space-y-2 text-sm"></div>
-        <div class="mt-4 text-right">
-          <button id="closeDetail" class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2">ปิด</button>
+        <div id="detailBody" class="text-sm text-gray-700 mb-4 whitespace-pre-line"></div>
+        <div class="flex justify-end">
+          <button id="closeBtn" class="bg-gray-200 text-gray-800 rounded-lg px-4 py-2">ปิด</button>
         </div>
       </div>
     </div>
@@ -184,7 +178,7 @@
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import {
       getFirestore, collection, onSnapshot, query, orderBy,
-      doc, updateDoc, getDoc, serverTimestamp, deleteField, deleteDoc
+      deleteDoc, doc, getDoc, updateDoc, serverTimestamp, deleteField
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
@@ -204,12 +198,13 @@
     const totalEl     = document.getElementById("total");
     const searchName  = document.getElementById("searchName");
 
-    const tabListBtn   = document.getElementById('tabList');
-    const tabReportBtn = document.getElementById('tabReport');
-    const pageList     = document.getElementById('pageList');
-    const pageReport   = document.getElementById('pageReport');
+    // Tabs
+    const tabListBtn = document.getElementById('tabList');
+    const tabFilterBtn = document.getElementById('tabFilter');
+    const pageList = document.getElementById('pageList');
+    const pageFilter = document.getElementById('pageFilter');
 
-    // Filters (Report)
+    // Filters (pageFilter)
     const fStart = document.getElementById('fStart');
     const fEnd   = document.getElementById('fEnd');
     const fStatus= document.getElementById('fStatus');
@@ -217,13 +212,19 @@
     const fGender= document.getElementById('fGender');
     const fMin   = document.getElementById('fMin');
     const fMax   = document.getElementById('fMax');
-    const kAll=document.getElementById('kAll'),kPeriod=document.getElementById('kPeriod'),kWon=document.getElementById('kWon'),kWinRate=document.getElementById('kWinRate'),kAvgPrice=document.getElementById('kAvgPrice'),countAllEl=document.getElementById('countAll'),countFilteredEl=document.getElementById('countFiltered');
+
+    const kAll = document.getElementById('kAll');
+    const kPeriod = document.getElementById('kPeriod');
+    const kWon = document.getElementById('kWon');
+    const kAvgPrice = document.getElementById('kAvgPrice');
+    const countFilteredEl = document.getElementById('countFiltered');
+    const listFilteredEl  = document.getElementById('listFiltered');
 
     // ---- Utils ----
     const fmtTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
     const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
     const escapeHtml=(s)=>(s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-    const toLowerNoSpace=(s)=> (s||'').toString().toLowerCase().trim();
+
     function getDateFromDoc(c){
       if (c.createdAt && typeof c.createdAt.toDate === 'function') return c.createdAt.toDate();
       if (c.date){ const d = new Date(c.date + 'T00:00:00'); if (!isNaN(d)) return d; }
@@ -234,7 +235,22 @@
       return null;
     }
 
-    // ---- Auth submit ----
+    // ---- Resolve Role (Claims -> roles/{uid}) ----
+    async function resolveRole(user, db){
+      let fromClaims = null;
+      try {
+        const token = await user.getIdTokenResult(true);
+        fromClaims = token.claims?.role || null;
+      } catch(e){ /* ignore */ }
+      let fromDoc = null;
+      try {
+        const snap = await getDoc(doc(db, 'roles', user.uid));
+        if (snap.exists()) fromDoc = snap.data().role || null;
+      } catch(e){ /* ignore */ }
+      return fromClaims || fromDoc || 'viewer';
+    }
+
+    // ---- Auth: Login ----
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       loginError.classList.add("hidden");
@@ -246,13 +262,15 @@
           document.getElementById("password").value
         );
       } catch (err) {
+        console.error('Login failed:', err.code, err.message);
         const map = {
           "auth/operation-not-allowed": "ยังไม่ได้เปิด Email/Password ใน Authentication > Sign-in method",
           "auth/invalid-api-key": "firebaseConfig ผิด โปรดตรวจสอบ apiKey / project",
           "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
           "auth/user-not-found": "ไม่พบบัญชีผู้ใช้",
           "auth/wrong-password": "รหัสผ่านไม่ถูกต้อง",
-          "auth/network-request-failed": "ปัญหาเครือข่าย/อย่าเปิดไฟล์แบบ file:// ให้รันผ่าน localhost",
+          "auth/network-request-failed": "อย่าเปิดไฟล์แบบ file:// ให้รันผ่าน localhost/https",
+          "auth/unauthorized-domain": "โดเมนยังไม่ถูกเพิ่มใน Authorized domains",
         };
         loginError.textContent = "เข้าสู่ระบบไม่สำเร็จ: " + (map[err.code] || `${err.code} — ${err.message}`);
         loginError.classList.remove("hidden");
@@ -260,7 +278,7 @@
     });
     document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
 
-    // ---- Auth state + roles ----
+    // ---- Auth: State ----
     let isAdmin=false, isStaff=false;
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -269,15 +287,15 @@
         return;
       }
       try {
-        const roleDoc = await getDoc(doc(db, 'roles', user.uid));
-        const role = roleDoc.exists() ? (roleDoc.data().role || 'viewer') : 'viewer';
+        const role = await resolveRole(user, db);
         isAdmin = role === "admin";
         isStaff = role === "staff";
+
         roleLabel.textContent = role;
         userBadge.textContent = `${user.email || user.uid} (${role})`;
 
         if (!(isAdmin || isStaff)) {
-          loginError.textContent = "ล็อกอินสำเร็จ แต่ยังไม่มีสิทธิ์เข้าหลังบ้าน — ตั้ง roles/{uid}.role เป็น admin หรือ staff";
+          loginError.textContent = "ล็อกอินสำเร็จ แต่ยังไม่มีสิทธิ์เข้าหลังบ้าน (กำหนด role เป็น admin/staff ที่ roles/{uid} หรือ Custom Claims)";
           loginError.classList.remove("hidden");
           dashboard.classList.add("hidden");
           loginScreen.classList.remove("hidden");
@@ -290,182 +308,106 @@
         loadCustomers();
 
       } catch (e) {
-        alert('อ่านสิทธิ์ไม่สำเร็จ: ' + e.message);
+        console.error('resolve role failed:', e);
+        alert('อ่านสิทธิ์ไม่สำเร็จ: ' + (e.message || e.code || e));
         await signOut(auth);
       }
     });
 
     // ---- Tabs ----
     function setTab(tab){
-      const set=(btn,sec,active)=>{ if(active){ btn.classList.add('tab-active'); sec.classList.remove('hidden'); } else { btn.classList.remove('tab-active'); sec.classList.add('hidden'); } };
-      set(tabListBtn, pageList, tab==='list');
-      set(tabReportBtn, pageReport, tab==='report');
-      if (tab==='report') renderReports();
+      const activate=(btn,sec,active)=>{
+        if(active){ btn.classList.add('tab-active'); btn.classList.remove('text-gray-500','border-transparent'); sec.classList.remove('hidden'); }
+        else{ btn.classList.remove('tab-active'); btn.classList.add('text-gray-500','border-transparent'); sec.classList.add('hidden'); }
+      };
+      activate(tabListBtn, pageList, tab==='list');
+      activate(tabFilterBtn, pageFilter, tab==='filter');
+      if (tab==='filter'){ ensureDefaultDateRange(); applyFilters(); }
     }
     tabListBtn.addEventListener('click', ()=>setTab('list'));
-    tabReportBtn.addEventListener('click', ()=>setTab('report'));
+    tabFilterBtn.addEventListener('click', ()=>setTab('filter'));
 
     // ---- Data ----
-    let currentItems = [];     // ทั้งหมด (เรียลไทม์)
-    let listFiltered = [];     // หลังกรองด้วยช่องค้นหา (ชื่อ)
-    let reportFiltered = [];   // หลังกรองด้วยตัวกรองหน้า Report
+    let currentItems = [];
+    let viewItems = [];     // สำหรับตารางหน้า "รายการ" (ถูกกรองด้วยช่องค้นหา)
+    let filteredItems = []; // สำหรับหน้า "ตัวกรอง/สรุป"
 
     function loadCustomers(){
       const qy = query(collection(db,"customers"), orderBy("createdAt","desc"));
       onSnapshot(qy, (snap)=>{
         currentItems = snap.docs.map((d,i)=>({ id:d.id, idx:i+1, ...d.data() }));
-        countAllEl.textContent = currentItems.length;
-        // อัปเดตรายการ (หน้า List)
-        applyListSearch();
-        // ตั้งค่า default วันที่ (report) แล้วคำนวณ
-        ensureDefaultDateRange();
-        applyReportFilters();
+        // default แสดงทั้งหมด
+        viewItems = currentItems.slice();
+        renderList(viewItems);
+        // ถ้าอยู่หน้า filter ให้คำนวณใหม่
+        if (!pageFilter.classList.contains('hidden')) { ensureDefaultDateRange(); applyFilters(); }
       });
     }
 
-    // ===== LIST PAGE =====
-    function applyListSearch(){
-      const keyword = toLowerNoSpace(searchName.value);
-      if (!keyword){
-        listFiltered = currentItems;
-      } else {
-        listFiltered = currentItems.filter(c => toLowerNoSpace(c.name).includes(keyword));
-      }
-      renderListTable(listFiltered);
-    }
-    searchName.addEventListener('input', applyListSearch);
+    // ---- Search by name (pageList) ----
+    searchName.addEventListener('input', ()=>{
+      const q = searchName.value.trim().toLowerCase();
+      if (!q){ viewItems = currentItems.slice(); renderList(viewItems); return; }
+      viewItems = currentItems.filter(c => (c.name||'').toLowerCase().includes(q));
+      renderList(viewItems);
+    });
 
-    function renderListTable(items){
+    // ---- Render: pageList ----
+    function renderList(items){
+      totalEl.textContent = items.length;
       if (!items.length){
-        totalEl.textContent = 0;
-        listEl.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-500">ไม่พบรายการ</td></tr>`;
+        listEl.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-500">ไม่พบข้อมูล</td></tr>`;
         return;
       }
-      totalEl.textContent = items.length;
-      listEl.innerHTML = items.map((c, i)=> {
-        const viewBtn = `<button class="text-blue-600 hover:underline mr-3" onclick="viewDetail('${c.id}')">👁️ ดูรายละเอียด</button>`;
-        const editBtn = (isAdmin||isStaff)
-          ? `<button class="text-green-600 hover:underline mr-3" onclick="editStatus('${c.id}','${(c.decision||'').replace(/'/g,"&#39;")}')">✏️ แก้สถานะ</button>`
-          : '';
-        const delBtn = isAdmin
-          ? `<button class="text-red-600 hover:underline" onclick="deleteCustomer('${c.id}','${escapeHtml(c.name)}')">🗑️ ลบ</button>`
-          : '';
+      listEl.innerHTML = items.map((c,idx)=>{
+        const btns = `
+          <button class="text-blue-600 hover:underline mr-3" onclick="viewDetail('${c.id}')">👁️ ดูรายละเอียด</button>
+          ${isAdmin ? `<button class="text-red-600 hover:underline" onclick="deleteCustomer('${c.id}')">🗑️ ลบ</button>` : `<span class="text-gray-400">-</span>`}
+        `;
         return `<tr class="border-t hover:bg-gray-50">
-          <td class="p-2">${i+1}</td>
+          <td class="p-2">${idx+1}</td>
           <td class="p-2">${fmtTH(c.date)}</td>
           <td class="p-2 font-medium">${escapeHtml(c.name)}</td>
-          <td class="p-2">${escapeHtml(c.phone)}</td>
-          <td class="p-2">${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
-          <td class="p-2">${escapeHtml(c.roomType)}</td>
+          <td class="p-2">${escapeHtml(c.phone||'-')}</td>
+          <td class="p-2">${escapeHtml(c.gender||'-')} / ${escapeHtml(c.age||'-')} ปี</td>
+          <td class="p-2">${escapeHtml(c.roomType||'-')}</td>
           <td class="p-2">฿${fmtNum(c.price)}</td>
           <td class="p-2">${escapeHtml(c.decision||'-')}</td>
-          <td class="p-2">${viewBtn}${editBtn}${delBtn}</td>
+          <td class="p-2">${btns}</td>
         </tr>`;
       }).join('');
     }
 
-    // เปิด Modal รายละเอียด
-    window.viewDetail = (id)=>{
-      const c = currentItems.find(x=>x.id===id);
-      if (!c) return;
-      const tpl = document.getElementById('detailModalTpl').content.cloneNode(true);
-      const modal = tpl.querySelector('.modal-backdrop');
-      const body  = tpl.querySelector('#detailBody');
-
-      const lines = [
-        ['วันที่', fmtTH(c.date)],
-        ['ชื่อ', escapeHtml(c.name)],
-        ['เบอร์', escapeHtml(c.phone)],
-        ['เพศ', escapeHtml(c.gender)],
-        ['อายุ', escapeHtml(c.age)],
-        ['โรคประจำตัว', escapeHtml(c.disease||'-')],
-        ['การดูแลพิเศษ', escapeHtml(c.specialCare||'-')],
-        ['ห้องที่สนใจ', escapeHtml(c.roomType)],
-        ['ราคา', '฿'+fmtNum(c.price||0)],
-        ['สถานะ', escapeHtml(c.decision||'-')],
-        ['ปิดการขายเมื่อ', getClosedDate(c)? escapeHtml(getClosedDate(c).toLocaleString('th-TH')) : '-'],
-      ];
-      body.innerHTML = lines.map(([k,v])=>`<div class="flex justify-between gap-4"><div class="text-gray-500 w-40">${k}</div><div class="flex-1 font-medium break-words">${v}</div></div>`).join('');
-      tpl.querySelector('#closeDetail').addEventListener('click',()=> document.body.removeChild(modal));
-      document.body.appendChild(modal);
-    };
-
-    // แก้สถานะ
-    window.editStatus = (id, currentStatus)=>{
-      const tpl = document.getElementById('statusModalTpl').content.cloneNode(true);
-      const modal = tpl.querySelector('.modal-backdrop');
-      const select = tpl.querySelector('#modalStatus');
-      select.value = currentStatus || 'รอตัดสินใจ';
-      tpl.querySelector('#okBtn').addEventListener('click', async ()=>{
-        const newStatus = select.value;
-        const ref = doc(db,'customers',id);
-        if (newStatus === 'ปิดการขายสำเร็จ'){
-          await updateDoc(ref, { decision: newStatus, closedAt: serverTimestamp() });
-        } else {
-          await updateDoc(ref, { decision: newStatus, closedAt: deleteField() });
-        }
-        document.body.removeChild(modal);
-      });
-      tpl.querySelector('#cancelBtn').addEventListener('click', ()=> document.body.removeChild(modal));
-      document.body.appendChild(modal);
-    };
-
-    // ลบข้อมูล — แสดงเฉพาะ admin
-    window.deleteCustomer = async (id, name=''){
-      if (!isAdmin) return alert('อนุญาตเฉพาะผู้ดูแลระบบ (admin) เท่านั้น');
-      if (!confirm(`ยืนยันลบลูกค้า"${name||''}" ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
-      try{
-        await deleteDoc(doc(db,'customers',id));
-      }catch(e){
-        alert('ลบไม่สำเร็จ: ' + (e.message || e.code || e));
+    // ---- Actions (global) ----
+    window.deleteCustomer = async (id)=>{
+      if (!isAdmin) return alert("อนุญาตเฉพาะผู้ดูแลระบบ");
+      if (confirm("ยืนยันการลบข้อมูลลูกค้ารายการนี้?")){
+        await deleteDoc(doc(db,"customers",id));
       }
     };
 
-    // Export / Print จากรายการที่ “ค้นหาแล้ว”
-    document.getElementById('exportCsvBtn').addEventListener('click', ()=> exportCsv(listFiltered));
-    document.getElementById('printBtn').addEventListener('click', ()=> printItems(listFiltered, "รายงานลูกค้า (ผลลัพธ์การค้นหา)"));
+    window.viewDetail = (id)=>{
+      const c = currentItems.find(v => v.id === id);
+      if (!c) return;
+      const closed = getClosedDate(c) ? getClosedDate(c).toLocaleString('th-TH') : '-';
+      const body = `วันที่: ${fmtTH(c.date)}
+ชื่อ: ${c.name||'-'}
+เบอร์: ${c.phone||'-'}
+เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี
+โรคประจำตัว: ${c.disease||'-'}
+การดูแลพิเศษ: ${c.specialCare||'-'}
+ห้องที่สนใจ: ${c.roomType||'-'}
+ราคา: ฿${fmtNum(c.price||0)}
+สถานะ: ${c.decision||'-'}
+ปิดการขายเมื่อ: ${closed}`;
+      const tpl = document.getElementById('detailModalTpl').content.cloneNode(true);
+      tpl.querySelector('#detailBody').textContent = body;
+      const modal = tpl.querySelector('.modal-backdrop');
+      tpl.querySelector('#closeBtn').addEventListener('click', ()=> document.body.removeChild(modal));
+      document.body.appendChild(modal);
+    };
 
-    const csvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
-    function exportCsv(items){
-      if (!items.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
-      const header = ['ลำดับ','วันที่','ชื่อ','เบอร์','เพศ','อายุ','ห้อง','ราคา','สถานะ','closedAt'];
-      const rows = items.map((c,i)=>[
-        (i+1), fmtTH(c.date), c.name||'', c.phone||'',
-        c.gender||'', c.age||'', c.roomType||'',
-        c.price||0, c.decision||'',
-        (getClosedDate(c)? getClosedDate(c).toISOString() : '')
-      ]);
-      const csv = [header, ...rows].map(r=>r.map(csvCell).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = `customers-search-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-    }
-    function printItems(items, title="รายงานลูกค้า"){
-      if (!items.length) return alert('ไม่มีข้อมูลให้พิมพ์');
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${title}</title>
-      <style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
-      h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
-      th{background:#f6f7f9}</style></head><body>
-      <h1>📋 ${title}</h1><div>พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
-      <table><thead><tr>
-        <th>#</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>เพศ/อายุ</th><th>ห้อง</th><th>ราคา</th><th>สถานะ</th><th>closedAt</th>
-      </tr></thead><tbody>
-        ${items.map((c,i)=>`<tr>
-          <td>${i+1}</td>
-          <td>${fmtTH(c.date)}</td>
-          <td>${escapeHtml(c.name)}</td>
-          <td>${escapeHtml(c.phone)}</td>
-          <td>${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
-          <td>${escapeHtml(c.roomType)}</td>
-          <td>${fmtNum(c.price)}</td>
-          <td>${escapeHtml(c.decision||'-')}</td>
-          <td>${(getClosedDate(c)? escapeHtml(getClosedDate(c).toLocaleString('th-TH')) : '-')}</td>
-        </tr>`).join('')}
-      </tbody></table></body></html>`;
-      const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
-    }
-
-    // ===== REPORT PAGE =====
+    // ---- Page: Filter/Summary (ไม่มีกราฟ) ----
     function ensureDefaultDateRange(){
       if (!fStart.value || !fEnd.value){
         const today = new Date();
@@ -475,7 +417,7 @@
       }
     }
 
-    function applyReportFilters(){
+    function applyFilters(){
       const min = fMin.value ? Number(fMin.value) : -Infinity;
       const max = fMax.value ? Number(fMax.value) : Infinity;
       const status = fStatus.value;
@@ -484,7 +426,7 @@
       const start = fStart.value ? new Date(fStart.value + 'T00:00:00') : null;
       const end   = fEnd.value   ? new Date(fEnd.value   + 'T23:59:59') : null;
 
-      reportFiltered = currentItems.filter(c=>{
+      filteredItems = currentItems.filter(c=>{
         const dt = getDateFromDoc(c);
         if (start && dt && dt < start) return false;
         if (end && dt && dt > end) return false;
@@ -496,24 +438,44 @@
         return true;
       });
 
-      countFilteredEl.textContent = reportFiltered.length;
+      countFilteredEl.textContent = filteredItems.length;
       kAll.textContent = currentItems.length;
-      kPeriod.textContent = reportFiltered.length;
+      kPeriod.textContent = filteredItems.length;
 
-      const won = reportFiltered.filter(c=> (c.decision||'')==='ปิดการขายสำเร็จ').length;
-      kWon.textContent = won;
-      kWinRate.textContent = reportFiltered.length ? ((won/reportFiltered.length*100).toFixed(1)+'%') : '0%';
+      const wonItems = filteredItems.filter(c=> (c.decision||'') === 'ปิดการขายสำเร็จ');
+      kWon.textContent = wonItems.length;
 
-      const avgPrice = reportFiltered.length ? Math.round(reportFiltered.reduce((a,c)=>a+Number(c.price||0),0)/reportFiltered.length) : 0;
+      const avgPrice = filteredItems.length ? Math.round(filteredItems.reduce((a,c)=>a+Number(c.price||0),0)/filteredItems.length) : 0;
       kAvgPrice.textContent = '฿' + fmtNum(avgPrice);
+
+      // render table
+      renderFilteredTable();
     }
 
-    function renderReports(){ applyReportFilters(); }
-    document.getElementById('btnApply').addEventListener('click', applyReportFilters);
+    function renderFilteredTable(){
+      if (!filteredItems.length){
+        listFilteredEl.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">ไม่พบข้อมูลตามเงื่อนไข</td></tr>`;
+        return;
+      }
+      listFilteredEl.innerHTML = filteredItems.map((c,i)=>`
+        <tr class="border-t hover:bg-gray-50">
+          <td class="p-2">${i+1}</td>
+          <td class="p-2 font-medium">${escapeHtml(c.name||'-')}</td>
+          <td class="p-2">${fmtTH(c.date)}</td>
+          <td class="p-2">${escapeHtml(c.gender||'-')} / ${escapeHtml(c.age||'-')} ปี</td>
+          <td class="p-2">${escapeHtml(c.roomType||'-')}</td>
+          <td class="p-2">฿${fmtNum(c.price||0)}</td>
+          <td class="p-2">${escapeHtml(c.decision||'-')}</td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('btnApply').addEventListener('click', applyFilters);
     document.getElementById('btnReset').addEventListener('click', ()=>{
       fStatus.value=''; fRoom.value=''; fGender.value=''; fMin.value=''; fMax.value='';
-      ensureDefaultDateRange(); applyReportFilters();
+      ensureDefaultDateRange(); applyFilters();
     });
+
   </script>
 </body>
 </html>
