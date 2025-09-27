@@ -1,289 +1,473 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>รายงานลูกค้า</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>หลังบ้าน — รายการลูกค้า / รายงาน</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script><!-- ไม่ใช้กราฟ แต่คงไว้เผื่ออนาคต -->
+  <!-- SheetJS สำหรับ Export Excel -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
-    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
-    .chip{background:#eef2ff;color:#3730a3;padding:.35rem .7rem;border-radius:9999px;font-size:.85rem}
-    .pill{background:#e0f2fe;color:#0369a1;border-radius:9999px;padding:.45rem .8rem}
-    .chip-warn{background:#fef3c7;color:#92400e}
-    .btn{border-radius:.75rem;padding:.6rem 1rem;font-weight:600}
-    /* Sidebar */
-    .sidebar{width:260px;min-height:100vh}
-    .nav-item{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;border-radius:.75rem}
-    .nav-item.active{background:#e0f2fe;color:#075985;font-weight:700}
-    .nav-item:hover{background:#eaf6ff}
+    *{box-sizing:border-box}
+    body{font-family:'Sarabun',sans-serif}
+    .sidebar{background:linear-gradient(180deg,#e6f0ff 0%,#f3f7ff 100%)}
   </style>
 </head>
-<body class="bg-sky-50">
-  <div class="flex">
-    <!-- Sidebar (ฟ้าอ่อน) -->
-    <aside class="sidebar bg-sky-100 border-r border-sky-200 p-4 flex flex-col">
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-full bg-sky-300 text-white flex items-center justify-center font-bold">A</div>
-        <div>
-          <div class="font-bold">App Admin</div>
-          <div id="sbRole" class="text-xs text-sky-700">ผู้ใช้: -</div>
+<body class="bg-slate-50 min-h-screen">
+  <!-- ===== Login Screen ===== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow p-6">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">🔒</div>
+        <h1 class="text-lg font-bold">เข้าสู่ระบบหลังบ้าน</h1>
+      </div>
+      <form id="loginForm" class="space-y-3">
+        <input id="email" type="email" placeholder="อีเมล" class="w-full border rounded-lg px-3 py-2" required/>
+        <input id="password" type="password" placeholder="รหัสผ่าน" class="w-full border rounded-lg px-3 py-2" required/>
+        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5">เข้าสู่ระบบ</button>
+      </form>
+      <p id="loginError" class="hidden mt-3 text-sm text-red-600"></p>
+    </div>
+  </div>
+
+  <!-- ===== App ===== -->
+  <div id="app" class="hidden">
+    <!-- Topbar -->
+    <header class="bg-white border-b">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">📊</div>
+          <h1 class="text-lg md:text-xl font-bold">หลังบ้าน — รายการลูกค้า / รายงาน</h1>
+        </div>
+        <div class="text-sm text-gray-600">
+          ผู้ใช้: <b id="userBadge">-</b>
         </div>
       </div>
+    </header>
 
-      <div class="text-xs text-sky-900 mb-2">เมนู</div>
-      <nav class="space-y-2">
-        <button id="mList"   class="nav-item active w-full text-left">📋 รายการลูกค้า</button>
-        <button id="mSearch" class="nav-item w-full text-left">🔎 ค้นหา/สรุป</button>
-      </nav>
+    <div class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
+      <!-- Sidebar -->
+      <aside class="sidebar col-span-12 md:col-span-3 lg:col-span-3 rounded-2xl shadow-sm p-4 flex flex-col">
+        <div class="mb-2 text-gray-400 text-sm">เมนู</div>
 
-      <div class="mt-auto pt-4 border-t border-sky-200">
-        <button id="btnLogout" class="w-full btn bg-rose-500 hover:bg-rose-600 text-white">ออกจากระบบ</button>
-        <div class="text-xs text-sky-700 mt-3">© 2025 YourBrand</div>
-      </div>
-    </aside>
+        <button id="btnMenuList"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl bg-white text-blue-700 shadow-sm border border-blue-100">
+          <span>📋</span><span class="font-semibold">รายการลูกค้า</span>
+        </button>
 
-    <!-- Main -->
-    <main class="flex-1 min-h-screen">
-      <!-- Header -->
-      <header class="bg-white border-b">
-        <div class="max-w-6xl mx-auto px-5 py-4">
-          <h1 class="text-2xl font-bold flex items-center gap-2">📚 รายงานลูกค้า</h1>
-          <p class="text-sm text-gray-500">เลือกตัวกรอง → เลือกคอลัมน์ → ส่งออก / จัดการรายการ</p>
+        <button id="btnMenuSearch"
+          class="w-full flex items-center gap-3 px-3 py-2 rounded-xl mt-2 hover:bg-white/80">
+          <span>🔎</span><span class="font-semibold">ค้นหา/สรุป</span>
+        </button>
+
+        <div class="mt-6 text-sm text-gray-500">
+          ผู้ใช้: <b id="roleLabel">-</b><br/>
+          <span id="emailLabel" class="break-all"></span>
         </div>
-      </header>
 
-      <div class="max-w-6xl mx-auto px-5 py-6 space-y-5">
-        <!-- Filter / Search (ใช้กับทั้ง 2 แท็บ) -->
-        <section class="bg-white rounded-xl shadow p-4">
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-            <div class="lg:col-span-5">
-              <input id="qText" type="text" placeholder="ค้นหาชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
-                     class="w-full border rounded-lg px-4 py-2.5 focus:ring focus:ring-blue-200"/>
+        <div class="mt-auto pt-4">
+          <button id="logoutBtn"
+            class="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-2.5 text-sm">
+            ออกจากระบบ
+          </button>
+          <div class="mt-3 text-xs text-gray-400">© 2025 YourBrand</div>
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <main class="col-span-12 md:col-span-9 lg:col-span-9">
+        <!-- ===== Filters Bar (เหมือนเดิม) ===== -->
+        <section class="bg-white rounded-2xl shadow p-5 mb-4">
+          <div class="flex flex-col md:flex-row md:items-end md:gap-3">
+            <div class="flex-1">
+              <label class="text-xs text-gray-500">ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง</label>
+              <input id="qText" type="text" class="w-full border rounded-lg px-3 py-2" placeholder="พิมพ์คำค้น เช่น suri, 093..., รอตัดสินใจ, ห้องเดี่ยว"/>
             </div>
-            <div class="lg:col-span-2">
-              <select id="qStatus" class="w-full border rounded-lg px-3 py-2.5">
+            <div>
+              <label class="text-xs text-gray-500">สถานะ</label>
+              <select id="qStatus" class="w-full md:w-48 border rounded-lg px-3 py-2">
                 <option value="">ทุกสถานะ</option>
-                <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
-                <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
-                <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
+                <option>ใหม่</option>
+                <option>หาข้อมูลเปรียบเทียบ</option>
+                <option>ยังไม่ใช้บริการตอนนี้</option>
+                <option>รอตัดสินใจ</option>
+                <option>รอทางการแพทย์</option>
+                <option>รอดูสถานที่</option>
+                <option>ดูสถานที่แล้วรอตัดสินใจ</option>
+                <option>ปิดการขายสำเร็จ</option>
+                <option>ยกเลิกการขาย</option>
               </select>
             </div>
-            <div class="lg:col-span-2">
-              <select id="qRoom" class="w-full border rounded-lg px-3 py-2.5">
+            <div>
+              <label class="text-xs text-gray-500">ห้อง</label>
+              <select id="qRoom" class="w-full md:w-48 border rounded-lg px-3 py-2">
                 <option value="">ทุกห้อง</option>
                 <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
                 <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
                 <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
               </select>
             </div>
-            <div class="lg:col-span-2">
-              <select id="qGender" class="w-full border rounded-lg px-3 py-2.5">
-                <option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option>
+            <div>
+              <label class="text-xs text-gray-500">เพศ</label>
+              <select id="qGender" class="w-full md:w-40 border rounded-lg px-3 py-2">
+                <option value="">ทุกเพศ</option>
+                <option>ชาย</option><option>หญิง</option>
               </select>
             </div>
-            <div class="lg:col-span-1 flex gap-2">
-              <button id="btnApply" class="btn bg-indigo-600 hover:bg-indigo-700 text-white w-full">ใช้ตัวกรอง</button>
-            </div>
-            <div class="lg:col-span-12 flex items-center justify-end gap-3 text-sm text-gray-600">
-              <button id="btnClear" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800">ล้างค่า</button>
-              <span class="ml-auto">ทั้งหมด: <b id="allCount">0</b> • แสดงผล: <b id="showCount">0</b></span>
-            </div>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button id="btnApply" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">ใช้ตัวกรอง</button>
+            <button id="btnReset" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
+            <span class="ml-auto text-sm text-gray-600">ทั้งหมด: <b id="countAll">0</b> • แสดงผล: <b id="countFiltered">0</b></span>
           </div>
         </section>
 
-        <!-- Report columns + export -->
-        <section class="bg-white rounded-xl shadow p-4">
-          <div class="text-lg font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[15px] mb-3">
-            <label><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
-            <label><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
-            <label><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
-            <label><input class="colChk" type="checkbox" value="gender"> เพศ</label>
-            <label><input class="colChk" type="checkbox" value="age"> อายุ</label>
-            <label><input class="colChk" type="checkbox" value="price"> ราคา</label>
-            <label><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
-            <label><input class="colChk" type="checkbox" value="decision" checked> สถานะ</label>
+        <!-- ===== Report / Export ===== -->
+        <section class="bg-white rounded-2xl shadow p-5 mb-4">
+          <div class="text-lg font-bold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-y-2 text-sm">
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="date" checked> วันที่</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="name" checked> ชื่อ</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="phone" checked> เบอร์</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="roomType" checked> ห้อง</label>
+
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="gender"> เพศ</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="age"> อายุ</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="price"> ราคา</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="decision"> สถานะ</label>
+
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="disease"> โรคประจำตัว</label>
+            <label class="flex items-center gap-2"><input type="checkbox" class="colpick" value="specialCare"> การดูแลพิเศษ</label>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button id="btnCsv"  class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export CSV</button>
-            <button id="btnJson" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export JSON</button>
-            <button id="btnXlsx" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export Excel</button>
+          <div class="mt-3 flex gap-2">
+            <button id="btnExportCsv" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export CSV</button>
+            <button id="btnExportJson" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export JSON</button>
+            <button id="btnExportXlsx" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export Excel</button>
+            <span class="text-sm text-gray-600 ml-2">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</span>
           </div>
-          <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่ถูกติ๊กจะใช้ตอนส่งออก</p>
         </section>
 
-        <!-- Results: รายการลูกค้า / ค้นหา-สรุป ใช้ผลกรองเดียวกัน -->
-        <section id="listWrap" class="space-y-3"></section>
-      </div>
-    </main>
+        <!-- ===== List ===== -->
+        <section class="space-y-4" id="cardsWrap"></section>
+      </main>
+    </div>
   </div>
 
+  <!-- ===== Scripts ===== -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
     import {
-      getFirestore, collection, query, orderBy, onSnapshot,
-      deleteDoc, doc, getDoc
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-    import {
-      getAuth, onAuthStateChanged, signOut
+      getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+      setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import {
+      getFirestore, collection, onSnapshot, query, orderBy,
+      deleteDoc, doc, updateDoc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
-    // --- Init ---
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-    const auth= getAuth(app);
+    // Init
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    await setPersistence(auth, browserLocalPersistence);
 
-    // --- Sidebar tabs (UI เท่านั้น; ใช้ dataset ชุดเดียว) ---
-    const mList   = document.getElementById('mList');
-    const mSearch = document.getElementById('mSearch');
-    function setTab(btn){
-      [mList,mSearch].forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      // ทั้งสองแท็บแสดงผลจาก viewItems เดียวกัน ดังนั้นไม่ต้องสลับส่วนแสดงผล
-    }
-    mList.onclick=()=>setTab(mList);
-    mSearch.onclick=()=>setTab(mSearch);
+    // Refs
+    const loginScreen = document.getElementById('loginScreen');
+    const appWrap     = document.getElementById('app');
+    const loginError  = document.getElementById('loginError');
+    const userBadge   = document.getElementById('userBadge');
+    const roleLabel   = document.getElementById('roleLabel');
+    const emailLabel  = document.getElementById('emailLabel');
+    const cardsWrap   = document.getElementById('cardsWrap');
 
-    // --- Logout (ซ้ายล่าง) ---
-    document.getElementById('btnLogout').onclick = ()=> signOut(auth);
+    // Sidebar buttons
+    const btnMenuList   = document.getElementById('btnMenuList');
+    const btnMenuSearch = document.getElementById('btnMenuSearch'); // ใช้ layout นี้หน้าเดียว (คงปุ่มไว้ให้คุ้นมือ)
 
-    // --- Role for delete button ---
-    let isAdmin = false;
-    onAuthStateChanged(auth, async (user)=>{
-      const sbRole = document.getElementById('sbRole');
-      if (!user){ sbRole.textContent='ผู้ใช้: -'; isAdmin=false; render(); return; }
-      sbRole.textContent = user.email || user.uid;
-      try{
-        const r = await getDoc(doc(db,'roles',user.uid));
-        isAdmin = r.exists() && r.data().role === 'admin';
-      }catch(e){ console.warn('อ่าน role ไม่สำเร็จ', e); isAdmin=false; }
-      render();
-    });
-
-    // --- Data ---
-    let allItems = [];
-    let viewItems = [];
-
-    const fmtTH = s => { const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
-    const fmtNum = n => new Intl.NumberFormat('th-TH').format(n||0);
-
-    onSnapshot(query(collection(db,'customers'), orderBy('createdAt','desc')), snap=>{
-      allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      document.getElementById('allCount').textContent = allItems.length;
-      applyFilter();
-    });
-
-    // --- Filters ---
+    // Filters
     const qText   = document.getElementById('qText');
     const qStatus = document.getElementById('qStatus');
     const qRoom   = document.getElementById('qRoom');
     const qGender = document.getElementById('qGender');
+    const btnApply= document.getElementById('btnApply');
+    const btnReset= document.getElementById('btnReset');
 
-    document.getElementById('btnApply').onclick = applyFilter;
-    document.getElementById('btnClear').onclick = ()=>{
-      qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value='';
-      applyFilter();
-    };
+    const countAllEl = document.getElementById('countAll');
+    const countFilteredEl = document.getElementById('countFiltered');
 
-    function applyFilter(){
-      const kw = qText.value.trim().toLowerCase();
-      const st = qStatus.value, rm = qRoom.value, gd = qGender.value;
-      viewItems = allItems.filter(c=>{
-        if (kw && !(
-          (c.name||'').toLowerCase().includes(kw) ||
-          (c.phone||'').toLowerCase().includes(kw) ||
-          (c.decision||'').toLowerCase().includes(kw) ||
-          (c.roomType||'').toLowerCase().includes(kw) ||
-          (c.note||'').toLowerCase().includes(kw)
-        )) return false;
-        if (st && (c.decision||'') !== st) return false;
-        if (rm && (c.roomType||'') !== rm) return false;
-        if (gd && (c.gender||'') !== gd) return false;
-        return true;
-      });
-      document.getElementById('showCount').textContent = viewItems.length;
-      render();
-    }
+    // Export buttons
+    const btnExportCsv  = document.getElementById('btnExportCsv');
+    const btnExportJson = document.getElementById('btnExportJson');
+    const btnExportXlsx = document.getElementById('btnExportXlsx');
 
-    // --- Render list ---
-    function render(){
-      const wrap = document.getElementById('listWrap');
-      if (!viewItems.length){
-        wrap.innerHTML = `<div class="bg-white rounded-xl shadow p-6 text-gray-500">ยังไม่มีข้อมูล</div>`;
+    // Utils
+    const fmtTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
+    const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
+
+    // Auth form
+    document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      loginError.classList.add('hidden');
+      try{
+        await signInWithEmailAndPassword(auth,
+          document.getElementById('email').value,
+          document.getElementById('password').value
+        );
+      }catch(err){
+        const map = {
+          "auth/operation-not-allowed": "ยังไม่ได้เปิด Email/Password ใน Authentication > Sign-in method",
+          "auth/invalid-api-key": "firebaseConfig ผิด",
+          "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
+          "auth/user-not-found": "ไม่พบบัญชีผู้ใช้",
+          "auth/wrong-password": "รหัสผ่านไม่ถูกต้อง",
+          "auth/network-request-failed": "โปรดเปิดผ่าน http(s):// ไม่ใช่ file://",
+        };
+        loginError.textContent = "เข้าสู่ระบบไม่สำเร็จ: " + (map[err.code] || err.message);
+        loginError.classList.remove('hidden');
+      }
+    });
+    document.getElementById('logoutBtn').addEventListener('click', ()=> signOut(auth));
+
+    // Role & state
+    let isAdmin=false, isStaff=false;
+    let allItems = [];     // ทั้งหมดจาก Firestore (ตาม createdAt)
+    let filtered = [];     // หลังใช้ตัวกรอง
+
+    onAuthStateChanged(auth, async (user)=>{
+      if(!user){
+        appWrap.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
         return;
       }
-      wrap.innerHTML = viewItems.map(c=>`
-        <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex justify-between items-start gap-3">
-            <div>
-              <div class="text-sm text-gray-500">${fmtTH(c.date)}</div>
-              <div class="text-xl font-semibold">${c.name||'-'}</div>
-              <div class="flex flex-wrap gap-2 mt-2 items-center">
-                <a href="tel:${c.phone||''}" class="pill">📞 ${c.phone||'-'}</a>
-                <span class="chip">เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี</span>
-                <span class="chip">ห้อง: ${c.roomType||'-'}</span>
-                <span class="chip">ราคา: ฿${fmtNum(c.price)}</span>
-                <span class="chip chip-warn">${c.decision||'-'}</span>
-              </div>
-            </div>
-            ${isAdmin ? `<button class="btn bg-rose-500 hover:bg-rose-600 text-white" onclick="deleteCustomer('${c.id}')">🗑️ ลบ</button>` : ``}
-          </div>
-        </div>
-      `).join('');
-    }
-    window.deleteCustomer = async (id)=>{
-      if (!isAdmin) return alert('ลบได้เฉพาะผู้ดูแลระบบ');
-      if (confirm('ยืนยันการลบรายการนี้?')) await deleteDoc(doc(db,'customers',id));
-    };
+      // read role
+      try{
+        const roleDoc = await getDoc(doc(db,'roles',user.uid));
+        const role = roleDoc.exists()? (roleDoc.data().role || 'viewer') : 'viewer';
+        isAdmin = role === 'admin';
+        isStaff = role === 'staff';
+        roleLabel.textContent = role;
+        userBadge.textContent = user.email || user.uid;
+        emailLabel.textContent = user.email || '';
+        if(!(isAdmin||isStaff)){
+          loginError.textContent = "ล็อกอินสำเร็จ แต่ยังไม่มีสิทธิ์เข้าหลังบ้าน (ต้องเป็น admin หรือ staff)";
+          loginError.classList.remove('hidden');
+          await signOut(auth);
+          return;
+        }
+      }catch(e){
+        alert('อ่านสิทธิ์ไม่สำเร็จ: '+e.message);
+        await signOut(auth);
+        return;
+      }
 
-    // --- Export ---
-    const pickCols = ()=> Array.from(document.querySelectorAll('.colChk:checked')).map(el=>el.value);
-    const shape = (items, cols)=> items.map(c=>{
-      const row={}; cols.forEach(k=>{
-        let v=c[k];
-        if (k==='date') v = fmtTH(c.date);
-        if (k==='price') v = Number(c.price||0);
-        row[k]=v??'';
-      }); return row;
+      // show app
+      loginScreen.classList.add('hidden');
+      appWrap.classList.remove('hidden');
+
+      // subscribe customers
+      const qy = query(collection(db,'customers'), orderBy('createdAt','desc'));
+      onSnapshot(qy, (snap)=>{
+        allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        countAllEl.textContent = allItems.length;
+        applyFilters();
+      });
     });
 
-    document.getElementById('btnCsv').onclick = ()=>{
-      if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=pickCols(), rows=shape(viewItems,cols);
-      const head=cols.join(',');
-      const lines = rows.map(r=>cols.map(k=>{
-        const s=(r[k]??'').toString().replace(/"/g,'""');
-        return /[",\n]/.test(s)?`"${s}"`:s;
-      }).join(','));
-      const csv=[head,...lines].join('\n');
-      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`report-${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    };
+    // Apply filters
+    function applyFilters(){
+      const text = (qText.value||'').toLowerCase().trim();
+      const st   = qStatus.value;
+      const rm   = qRoom.value;
+      const gd   = qGender.value;
 
-    document.getElementById('btnJson').onclick = ()=>{
-      if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=pickCols(), rows=shape(viewItems,cols);
-      const blob=new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download=`report-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-    };
+      filtered = allItems.filter(c=>{
+        // keyword match
+        const bag = [
+          c.name, c.phone, c.decision, c.roomType,
+          (c.gender? 'gender:' + c.gender : '')
+        ].map(v=> (v||'').toString().toLowerCase()).join(' ');
+        if(text && !bag.includes(text)) return false;
 
-    document.getElementById('btnXlsx').onclick = ()=>{
-      if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=pickCols(), rows=shape(viewItems,cols);
-      const ws=XLSX.utils.json_to_sheet(rows,{header:cols});
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,'Report');
-      XLSX.writeFile(wb,`report-${new Date().toISOString().slice(0,10)}.xlsx`);
-    };
+        if(st && (c.decision||'') !== st) return false;
+        if(rm && (c.roomType||'') !== rm) return false;
+        if(gd && (c.gender||'') !== gd) return false;
+        return true;
+      });
+
+      countFilteredEl.textContent = filtered.length;
+      renderCards(filtered);
+    }
+
+    btnApply.addEventListener('click', applyFilters);
+    btnReset.addEventListener('click', ()=>{
+      qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value='';
+      applyFilters();
+    });
+
+    // Render list as cards
+    function renderCards(items){
+      if(!items.length){
+        cardsWrap.innerHTML = `<div class="bg-white rounded-2xl shadow p-10 text-center text-gray-500">ยังไม่มีข้อมูลตามเงื่อนไข</div>`;
+        return;
+      }
+      cardsWrap.innerHTML = items.map(c=>{
+        // dropdown status (inline edit)
+        const statusOptions = [
+          'ใหม่','หาข้อมูลเปรียบเทียบ','ยังไม่ใช้บริการตอนนี้','รอตัดสินใจ','รอทางการแพทย์',
+          'รอดูสถานที่','ดูสถานที่แล้วรอตัดสินใจ','ปิดการขายสำเร็จ','ยกเลิกการขาย'
+        ].map(s=>`<option ${ (c.decision||'')===s?'selected':'' }>${s}</option>`).join('');
+
+        const delBtn = isAdmin
+          ? `<button onclick="deleteCustomer('${c.id}')"
+               class="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm">ลบ</button>`
+          : '';
+
+        return `
+          <article class="bg-white rounded-2xl shadow p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="text-xs text-gray-400 mb-1">${fmtTH(c.date)}</div>
+                <h3 class="text-xl font-bold mb-3">${c.name ?? '-'}</h3>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <a href="tel:${c.phone||''}"
+                     class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm flex items-center gap-1">
+                    📞 ${c.phone ?? '-'}
+                  </a>
+                  <span class="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-sm">
+                    เพศ/อายุ: ${c.gender ?? '-'} / ${c.age ?? '-'} ปี
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-sm">
+                    ห้อง: ${c.roomType ?? '-'}
+                  </span>
+                  <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm">
+                    ราคา: ฿${fmtNum(c.price)}
+                  </span>
+
+                  <select onchange="updateStatus('${c.id}', this.value)"
+                          class="px-3 py-1 rounded-full border text-sm">
+                    ${statusOptions}
+                  </select>
+                </div>
+
+                ${ (c.disease||c.specialCare) ? `
+                  <div class="mt-3 text-sm text-gray-600">
+                    ${c.disease? `<div>โรคประจำตัว: ${c.disease}</div>`:''}
+                    ${c.specialCare? `<div>การดูแลพิเศษ: ${c.specialCare}</div>`:''}
+                  </div>` : '' }
+              </div>
+
+              <div class="flex-shrink-0">${delBtn}</div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    // Inline status update
+    async function updateStatus(id, newStatus){
+      try{
+        await updateDoc(doc(db,'customers',id), { decision: newStatus });
+        // แจ้งเตือนสั้น ๆ
+        toast('อัปเดตสถานะสำเร็จ','ok');
+      }catch(e){
+        console.error(e);
+        toast('อัปเดตไม่สำเร็จ: '+e.message,'err');
+      }
+    }
+    window.updateStatus = updateStatus;
+
+    // Delete (admin only)
+    async function deleteCustomer(id){
+      if(!isAdmin) return;
+      if(confirm('ยืนยันการลบข้อมูลลูกค้ารายการนี้?')){
+        await deleteDoc(doc(db,'customers',id));
+      }
+    }
+    window.deleteCustomer = deleteCustomer;
+
+    // Simple toast
+    const toastBox = document.createElement('div');
+    toastBox.className = 'fixed left-1/2 -translate-x-1/2 top-4 z-50 space-y-2';
+    document.body.appendChild(toastBox);
+    function toast(msg,type='info'){
+      const bg = type==='ok' ? 'bg-emerald-600' : (type==='err' ? 'bg-rose-600' : 'bg-slate-800');
+      const el = document.createElement('div');
+      el.className = `${bg} text-white px-3 py-2 rounded-lg shadow text-sm`;
+      el.textContent = msg;
+      toastBox.appendChild(el);
+      setTimeout(()=> el.remove(), 1800);
+    }
+
+    // ===== Export helpers =====
+    function getPickedColumns(){
+      const picks = Array.from(document.querySelectorAll('.colpick'))
+        .filter(i=>i.checked).map(i=>i.value);
+      return picks.length? picks : ['date','name','phone','roomType','decision'];
+    }
+    function filteredToRows(){
+      const cols = getPickedColumns();
+      const rows = filtered.map(c=>{
+        const o = {};
+        cols.forEach(k=>{
+          if(k==='date'){ o['วันที่'] = fmtTH(c.date); }
+          else if(k==='name'){ o['ชื่อ'] = c.name || ''; }
+          else if(k==='phone'){ o['เบอร์'] = c.phone || ''; }
+          else if(k==='roomType'){ o['ห้อง'] = c.roomType || ''; }
+          else if(k==='gender'){ o['เพศ'] = c.gender || ''; }
+          else if(k==='age'){ o['อายุ'] = c.age ?? ''; }
+          else if(k==='price'){ o['ราคา'] = c.price ?? ''; }
+          else if(k==='decision'){ o['สถานะ'] = c.decision || ''; }
+          else if(k==='disease'){ o['โรคประจำตัว'] = c.disease || ''; }
+          else if(k==='specialCare'){ o['การดูแลพิเศษ'] = c.specialCare || ''; }
+        });
+        return o;
+      });
+      return { cols, rows };
+    }
+
+    btnExportCsv.addEventListener('click', ()=>{
+      const { rows } = filteredToRows();
+      if(!rows.length) return toast('ไม่มีข้อมูลส่งออก','err');
+      const header = Object.keys(rows[0]);
+      const toCell = s => {
+        const v = (s ?? '').toString();
+        return /[",\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v;
+      };
+      const csv = [header.join(','),
+        ...rows.map(r=> header.map(h=>toCell(r[h])).join(','))].join('\n');
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `report-${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    });
+
+    btnExportJson.addEventListener('click', ()=>{
+      const { rows } = filteredToRows();
+      if(!rows.length) return toast('ไม่มีข้อมูลส่งออก','err');
+      const blob = new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `report-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    });
+
+    btnExportXlsx.addEventListener('click', ()=>{
+      const { rows } = filteredToRows();
+      if(!rows.length) return toast('ไม่มีข้อมูลส่งออก','err');
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Report');
+      XLSX.writeFile(wb, `report-${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+
+    // Sidebar buttons -> โฟกัสรายการลูกค้าเสมอ (คงพฤติกรรมให้คุ้น)
+    btnMenuList.addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
+    btnMenuSearch.addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
   </script>
 </body>
 </html>
