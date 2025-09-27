@@ -2,310 +2,242 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>รายงานลูกค้า — หลังบ้าน</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>รายงานลูกค้า</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script><!-- ไม่ใช้กราฟ แค่กัน warning imports บางธีม -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
     body{font-family:'Sarabun',sans-serif}
-    .chip{background:#eef2ff;color:#3730a3;padding:.30rem .7rem;border-radius:9999px;font-size:.85rem}
-    .chip-amber{background:#fef3c7;color:#92400e}
+    .chip{background:#eef2ff;color:#3730a3;padding:.35rem .7rem;border-radius:9999px;font-size:.85rem}
     .pill{background:#e0f2fe;color:#0369a1;border-radius:9999px;padding:.45rem .8rem}
+    .chip-warn{background:#fef3c7;color:#92400e}
     .btn{border-radius:.75rem;padding:.6rem 1rem;font-weight:600}
   </style>
 </head>
 <body class="bg-sky-50 min-h-screen">
-  <!-- Top -->
+
+  <!-- Header -->
   <header class="bg-white border-b">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <h1 class="text-2xl font-bold flex items-center gap-2">
-        📚 <span>รายงานลูกค้า</span>
-      </h1>
-      <div class="text-sm text-gray-500">เลือกตัวกรอง → เลือกคอลัมน์ใน Report → Export</div>
+    <div class="max-w-6xl mx-auto px-4 py-4">
+      <h1 class="text-2xl font-bold flex items-center gap-2">📚 รายงานลูกค้า</h1>
+      <p class="text-sm text-gray-500">เลือกตัวกรอง → เลือกคอลัมน์ → ส่งออก / จัดการรายการ</p>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <!-- FILTER BAR -->
+    <!-- Filter bar (ไม่มี sidebar) -->
     <section class="bg-white rounded-xl shadow p-4 mb-4">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
         <div class="lg:col-span-5">
-          <input id="qText" type="text" placeholder="ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
+          <input id="qText" type="text" placeholder="ค้นหาชื่อ/เบอร์/สถานะ/ห้อง/หมายเหตุ"
                  class="w-full border rounded-lg px-4 py-2.5 focus:ring focus:ring-blue-200"/>
         </div>
         <div class="lg:col-span-2">
           <select id="qStatus" class="w-full border rounded-lg px-3 py-2.5">
             <option value="">ทุกสถานะ</option>
-            <option>ใหม่</option>
-            <option>หาข้อมูลเปรียบเทียบ</option>
-            <option>ยังไม่ใช้บริการตอนนี้</option>
-            <option>รอตัดสินใจ</option>
-            <option>รอทางการแพทย์</option>
-            <option>รอดูสถานที่</option>
-            <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-            <option>ปิดการขายสำเร็จ</option>
-            <option>ยกเลิกการขาย</option>
+            <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+            <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+            <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
           </select>
         </div>
         <div class="lg:col-span-2">
           <select id="qRoom" class="w-full border rounded-lg px-3 py-2.5">
             <option value="">ทุกห้อง</option>
             <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
-            <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
-            <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
+            <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option><option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
           </select>
         </div>
         <div class="lg:col-span-2">
           <select id="qGender" class="w-full border rounded-lg px-3 py-2.5">
-            <option value="">ทุกเพศ</option>
-            <option>ชาย</option><option>หญิง</option>
+            <option value="">ทุกเพศ</option><option>ชาย</option><option>หญิง</option>
           </select>
         </div>
         <div class="lg:col-span-1 flex gap-2">
           <button id="btnApply" class="btn bg-indigo-600 hover:bg-indigo-700 text-white w-full">ใช้ตัวกรอง</button>
         </div>
-        <div class="lg:col-span-12 flex items-center justify-end text-sm text-gray-600 gap-2">
+        <div class="lg:col-span-12 flex items-center justify-end gap-3 text-sm text-gray-600">
           <button id="btnClear" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800">ล้างค่า</button>
           <span class="ml-auto">ทั้งหมด: <b id="allCount">0</b> • แสดงผล: <b id="showCount">0</b></span>
         </div>
       </div>
     </section>
 
-    <!-- REPORT (columns + export) -->
+    <!-- Report columns + Export -->
     <section class="bg-white rounded-xl shadow p-4 mb-6">
-      <div class="flex items-start gap-4">
-        <div class="flex-1">
-          <div class="text-lg font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[15px]">
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="gender"> เพศ</label>
-
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="age"> อายุ</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="price"> ราคา</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="disease"> โรคประจำตัว</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="specialCare"> การดูแลพิเศษ</label>
-
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
-            <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="decision" checked> สถานะ</label>
-          </div>
-
-          <div class="flex flex-wrap gap-2 mt-4">
-            <button id="exportCsv"  class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export CSV</button>
-            <button id="exportJson" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export JSON</button>
-            <button id="exportXlsx" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export Excel</button>
-          </div>
-          <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่เลือกจะถูกใช้ตอนส่งออก</p>
-        </div>
-        <div class="w-64 hidden md:block">
-          <div class="text-gray-700 font-medium mb-2">ใช้ข้อมูลจาก “ผลลัพธ์ที่คัดกรอง”</div>
-          <label class="flex items-center gap-2"><input class="colChk" type="checkbox" value="roomType" checked disabled> ห้อง</label>
-        </div>
+      <div class="text-lg font-semibold mb-2">Report — เลือกคอลัมน์ที่ต้องการส่งออก</div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-[15px] mb-3">
+        <label><input class="colChk" type="checkbox" value="date" checked> วันที่</label>
+        <label><input class="colChk" type="checkbox" value="name" checked> ชื่อ</label>
+        <label><input class="colChk" type="checkbox" value="phone" checked> เบอร์</label>
+        <label><input class="colChk" type="checkbox" value="gender"> เพศ</label>
+        <label><input class="colChk" type="checkbox" value="age"> อายุ</label>
+        <label><input class="colChk" type="checkbox" value="price"> ราคา</label>
+        <label><input class="colChk" type="checkbox" value="roomType" checked> ห้อง</label>
+        <label><input class="colChk" type="checkbox" value="decision" checked> สถานะ</label>
       </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="btnCsv"  class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export CSV</button>
+        <button id="btnJson" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export JSON</button>
+        <button id="btnXlsx" class="btn bg-emerald-500 hover:bg-emerald-600 text-white">⬇️ Export Excel</button>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">คอลัมน์ที่ถูกติ๊กจะใช้ตอนส่งออก</p>
     </section>
 
-    <!-- RESULTS -->
+    <!-- Results -->
     <section id="result" class="space-y-3"></section>
   </main>
 
-  <!-- Detail Modal -->
-  <template id="detailTpl">
-    <div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-[560px] max-w-[92vw] p-5">
-        <h3 class="text-lg font-bold mb-3">รายละเอียดลูกค้า</h3>
-        <div id="detailBody" class="text-gray-700 whitespace-pre-wrap"></div>
-        <div class="mt-4 flex justify-end gap-2">
-          <button id="closeBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800">ปิด</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <!-- App -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import {
+      getFirestore, collection, query, orderBy, onSnapshot,
+      deleteDoc, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
     import { firebaseConfig } from "./firebaseConfig.js";
 
-    // ---- Init
+    // --- Init ---
     const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
     const auth = getAuth(app);
-    const db   = getFirestore(app);
 
-    // ---- Refs
-    const qText    = document.getElementById('qText');
-    const qStatus  = document.getElementById('qStatus');
-    const qRoom    = document.getElementById('qRoom');
-    const qGender  = document.getElementById('qGender');
-    const btnApply = document.getElementById('btnApply');
-    const btnClear = document.getElementById('btnClear');
-    const allCount = document.getElementById('allCount');
-    const showCount= document.getElementById('showCount');
-    const resultEl = document.getElementById('result');
-
-    const exportCsvBtn  = document.getElementById('exportCsv');
-    const exportJsonBtn = document.getElementById('exportJson');
-    const exportXlsxBtn = document.getElementById('exportXlsx');
-
-    // ---- State
+    // ------ Admin gate (ลบได้เฉพาะ admin) ------
     let isAdmin = false;
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return; // ยังไม่ล็อกอินก็แสดงได้ แต่ปุ่มลบจะถูกซ่อนไว้
+      try{
+        const r = await getDoc(doc(db,'roles',user.uid));
+        isAdmin = r.exists() && r.data().role === 'admin';
+        renderList(); // อัพเดทปุ่มลบ
+      }catch(e){ console.warn('อ่าน role ไม่สำเร็จ', e); }
+    });
+
+    // ------ Refs ------
+    const qText   = document.getElementById('qText');
+    const qStatus = document.getElementById('qStatus');
+    const qRoom   = document.getElementById('qRoom');
+    const qGender = document.getElementById('qGender');
+    const btnApply= document.getElementById('btnApply');
+    const btnClear= document.getElementById('btnClear');
+    const allCount= document.getElementById('allCount');
+    const showCount= document.getElementById('showCount');
+    const resultEl= document.getElementById('result');
+
+    const fmtTH = s => { const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
+    const fmtNum = n => new Intl.NumberFormat('th-TH').format(n||0);
+
     let allItems = [];
     let viewItems = [];
 
-    // ---- Auth
-    onAuthStateChanged(auth, async (user)=>{
-      if(!user){ location.href='index.html'; return; }
-      try{
-        const tk = await getIdTokenResult(user,true);
-        isAdmin = (tk.claims.role || tk.claims.customRole) === 'admin';
-      }catch{ isAdmin = false; }
-      startRealtime();
+    // ------ Live data ------
+    onSnapshot(query(collection(db,'customers'), orderBy('createdAt','desc')), snap=>{
+      allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      allCount.textContent = allItems.length;
+      applyFilter();
     });
 
-    // ---- Firestore realtime
-    function startRealtime(){
-      const qy = query(collection(db,'customers'), orderBy('createdAt','desc'));
-      onSnapshot(qy, (snap)=>{
-        allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        allCount.textContent = allItems.length;
-        applyFilter();
-      });
-    }
-
-    // ---- Helpers
-    const fmtTH = s => { const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); };
-    const fmtNum = n => new Intl.NumberFormat('th-TH').format(n||0);
-    const tel = p => (p||'').replace(/\s+/g,'');
-
-    function matchesKw(c, kw){
-      if(!kw) return true;
-      kw = kw.toLowerCase();
-      return [
-        c.name, c.phone, c.gender, c.roomType, c.decision, c.disease, c.specialCare
-      ].map(v=>(v??'').toString().toLowerCase()).join(' ').includes(kw);
-    }
-
-    // ---- Filter
+    // ------ Filter ------
     function applyFilter(){
-      const kw = qText.value.trim();
-      const st = qStatus.value;
-      const room = qRoom.value;
-      const sex = qGender.value;
-
+      const kw = qText.value.trim().toLowerCase();
+      const st = qStatus.value, rm = qRoom.value, gd = qGender.value;
       viewItems = allItems.filter(c=>{
-        if(!matchesKw(c,kw)) return false;
-        if(st   && (c.decision||'') !== st) return false;
-        if(room && (c.roomType||'') !== room) return false;
-        if(sex  && (c.gender||'')   !== sex) return false;
+        if (kw && !(
+          (c.name||'').toLowerCase().includes(kw) ||
+          (c.phone||'').toLowerCase().includes(kw) ||
+          (c.decision||'').toLowerCase().includes(kw) ||
+          (c.roomType||'').toLowerCase().includes(kw) ||
+          (c.note||'').toLowerCase().includes(kw)
+        )) return false;
+        if (st && (c.decision||'') !== st) return false;
+        if (rm && (c.roomType||'') !== rm) return false;
+        if (gd && (c.gender||'') !== gd) return false;
         return true;
       });
-
       showCount.textContent = viewItems.length;
       renderList();
     }
-    btnApply.addEventListener('click', applyFilter);
-    btnClear.addEventListener('click', ()=>{
-      qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value='';
-      applyFilter();
-    });
-    qText.addEventListener('keydown', e=>{ if(e.key==='Enter') applyFilter(); });
+    btnApply.onclick = applyFilter;
+    btnClear.onclick = ()=>{ qText.value=''; qStatus.value=''; qRoom.value=''; qGender.value=''; applyFilter(); };
 
-    // ---- Render
+    // ------ Render ------
     function renderList(){
-      if(!viewItems.length){
+      if (!viewItems.length){
         resultEl.innerHTML = `<div class="bg-white rounded-xl shadow p-6 text-gray-500">ยังไม่มีข้อมูล</div>`;
         return;
       }
-      resultEl.innerHTML = viewItems.map(c=> `
+      resultEl.innerHTML = viewItems.map(c=>`
         <div class="bg-white rounded-xl shadow p-4">
-          <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0">
-              <div class="text-sm text-gray-500 mb-1">${fmtTH(c.date)}</div>
-              <div class="text-2xl font-semibold text-gray-900">${c.name||'-'}</div>
-              <div class="mt-1 flex flex-wrap items-center gap-2 text-gray-700">
-                <a class="pill flex items-center gap-1 hover:underline" href="tel:${tel(c.phone)}">📞 <span>${c.phone||'-'}</span></a>
+          <div class="flex justify-between items-start gap-3">
+            <div>
+              <div class="text-sm text-gray-500">${fmtTH(c.date)}</div>
+              <div class="text-xl font-semibold">${c.name||'-'}</div>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <a href="tel:${c.phone||''}" class="pill">📞 ${c.phone||'-'}</a>
                 <span class="chip">เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี</span>
                 <span class="chip">ห้อง: ${c.roomType||'-'}</span>
                 <span class="chip">ราคา: ฿${fmtNum(c.price)}</span>
-                <span class="chip chip-amber">${c.decision||'-'}</span>
+                <span class="chip chip-warn">${c.decision||'-'}</span>
               </div>
             </div>
-            <div class="shrink-0 flex gap-2">
-              <button class="btn bg-white border text-gray-800 hover:bg-gray-50" onclick="viewDetail('${c.id}')">👁️ ดูรายละเอียด</button>
-              ${isAdmin? `<button class="btn bg-rose-500 hover:bg-rose-600 text-white" onclick="deleteCustomer('${c.id}')">🗑️ ลบ</button>`:''}
-            </div>
+            ${isAdmin ? `<button class="btn bg-rose-500 hover:bg-rose-600 text-white" onclick="deleteCustomer('${c.id}')">🗑️ ลบ</button>` : ``}
           </div>
         </div>
       `).join('');
     }
-
-    // ---- Actions
-    window.viewDetail = (id)=>{
-      const c = viewItems.find(v=>v.id===id) || allItems.find(v=>v.id===id);
-      if(!c) return;
-      const tpl = document.getElementById('detailTpl').content.cloneNode(true);
-      const root = tpl.querySelector('div');
-      const body = tpl.querySelector('#detailBody');
-      body.textContent =
-`วันที่: ${fmtTH(c.date)}
-ชื่อ: ${c.name||'-'}
-เบอร์: ${c.phone||'-'}
-เพศ/อายุ: ${c.gender||'-'} / ${c.age||'-'} ปี
-ห้อง: ${c.roomType||'-'}
-ราคา: ฿${fmtNum(c.price)}
-สถานะ: ${c.decision||'-'}
-โรคประจำตัว: ${c.disease||'-'}
-การดูแลพิเศษ: ${c.specialCare||'-'}`;
-      tpl.querySelector('#closeBtn').addEventListener('click', ()=> document.body.removeChild(root));
-      document.body.appendChild(root);
-    };
-
     window.deleteCustomer = async (id)=>{
-      if(!isAdmin) return alert('อนุญาตเฉพาะผู้ดูแลระบบ');
-      if(confirm('ยืนยันลบรายการนี้?')) await deleteDoc(doc(db,'customers',id));
+      if (!isAdmin) return alert('ลบได้เฉพาะผู้ดูแลระบบ');
+      if (confirm('ยืนยันการลบรายการนี้?')) await deleteDoc(doc(db,'customers',id));
     };
 
-    // ---- Export
-    const getCols=()=> Array.from(document.querySelectorAll('.colChk:checked')).map(x=>x.value);
-    const mapRow=(c,cols)=> cols.map(k=> k==='date'? fmtTH(c.date) : (c[k] ?? '') );
-
-    function download(name, blob){
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click();
-      setTimeout(()=>URL.revokeObjectURL(a.href), 800);
-    }
-
-    exportCsvBtn.addEventListener('click', ()=>{
-      if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=getCols();
-      const header=cols.join(',');
-      const rows=viewItems.map(c=>mapRow(c,cols).map(v=>{
-        v=(v??'').toString(); return /[",\n]/.test(v)? `"${v.replace(/"/g,'""')}"` : v;
-      }).join(',')).join('\n');
-      download(`report-${new Date().toISOString().slice(0,10)}.csv`, new Blob([header+'\n'+rows],{type:'text/csv;charset=utf-8;'}));
+    // ------ Export helpers ------
+    const pickCols = () => Array.from(document.querySelectorAll('.colChk:checked')).map(el=>el.value);
+    const shape = (items, cols) => items.map(c=>{
+      const row = {};
+      cols.forEach(k=>{
+        let v = c[k];
+        if (k==='date') v = fmtTH(c.date);
+        if (k==='price') v = Number(c.price||0);
+        row[k] = (v ?? '');
+      });
+      return row;
     });
 
-    exportJsonBtn.addEventListener('click', ()=>{
+    document.getElementById('btnCsv').onclick = ()=>{
       if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=getCols();
-      const arr=viewItems.map(c=>{ const o={}; cols.forEach(k=>o[k]=k==='date'?fmtTH(c.date):c[k]??''); return o; });
-      download(`report-${new Date().toISOString().slice(0,10)}.json`, new Blob([JSON.stringify(arr,null,2)],{type:'application/json'}));
-    });
+      const cols = pickCols(), rows = shape(viewItems, cols);
+      const csv = [cols.join(',')].concat(rows.map(r=>cols.map(k=>{
+        const s = (r[k]??'').toString().replace(/"/g,'""');
+        return /[",\n]/.test(s) ? `"${s}"` : s;
+      }).join(','))).join('\n');
+      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `report-${new Date().toISOString().slice(0,10)}.csv`
+      }); a.click();
+    };
 
-    // Excel (XLS format via HTML table — เปิดได้ใน Excel)
-    exportXlsxBtn.addEventListener('click', ()=>{
+    document.getElementById('btnJson').onclick = ()=>{
       if(!viewItems.length) return alert('ไม่มีข้อมูล');
-      const cols=getCols();
-      const th=cols.map(c=>`<th style="border:1px solid #ddd;padding:6px;text-align:left">${c}</th>`).join('');
-      const trs=viewItems.map(c=>{
-        const tds=mapRow(c,cols).map(v=>`<td style="border:1px solid #ddd;padding:6px">${(v??'').toString()
-          .replace(/&/g,'&amp;').replace(/</g,'&lt;')}</td>`).join('');
-        return `<tr>${tds}</tr>`;
-      }).join('');
-      const html=`<meta charset="utf-8"><table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
-      download(`report-${new Date().toISOString().slice(0,10)}.xls`, new Blob([html],{type:'application/vnd.ms-excel'}));
-    });
+      const cols = pickCols(), rows = shape(viewItems, cols);
+      const blob = new Blob([JSON.stringify(rows,null,2)],{type:'application/json'});
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(blob),
+        download: `report-${new Date().toISOString().slice(0,10)}.json`
+      }); a.click();
+    };
+
+    document.getElementById('btnXlsx').onclick = ()=>{
+      if(!viewItems.length) return alert('ไม่มีข้อมูล');
+      const cols = pickCols(), rows = shape(viewItems, cols);
+      const ws = XLSX.utils.json_to_sheet(rows, {header: cols});
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Report');
+      XLSX.writeFile(wb, `report-${new Date().toISOString().slice(0,10)}.xlsx`);
+    };
   </script>
 </body>
 </html>
