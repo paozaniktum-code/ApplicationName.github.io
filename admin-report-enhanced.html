@@ -1,697 +1,456 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>หลังบ้าน — รายงาน/จัดการลูกค้า</title>
+  <title>หลังบ้าน · รายงานลูกค้า (Firebase)</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
-    *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
-    .modal-card{background:#fff;border-radius:1rem;box-shadow:0 20px 60px rgba(0,0,0,.2);max-width:420px;width:100%;padding:1.25rem}
-    .tab-active{border-color:#3b82f6;color:#1f2937}
+    * { box-sizing: border-box }
+    body { font-family: 'Sarabun', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Sarabun', sans-serif; }
   </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-  <!-- Login -->
-  <div id="loginScreen" class="flex items-center justify-center min-h-screen p-4">
-    <form id="loginForm" class="bg-white w-full max-w-sm p-6 rounded-2xl shadow">
-      <h1 class="text-xl font-bold mb-4">🔒 เข้าสู่ระบบหลังบ้าน</h1>
-      <input id="email" type="email" placeholder="อีเมล" class="border rounded-lg w-full px-3 py-2 mb-2" required />
-      <input id="password" type="password" placeholder="รหัสผ่าน" class="border rounded-lg w-full px-3 py-2 mb-3" required />
-      <button class="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2.5">เข้าสู่ระบบ</button>
-      <p id="loginError" class="text-red-600 text-sm mt-2 hidden"></p>
-    </form>
+
+  <!-- ========== Login Screen ========== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white shadow-xl rounded-2xl p-6">
+      <div class="text-center mb-6">
+        <div class="text-4xl">🔒</div>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">เข้าสู่ระบบหลังบ้าน</h1>
+        <p class="text-gray-500 text-sm">เฉพาะผู้ใช้ที่มีสิทธิ์ <span class="font-semibold">admin / staff</span></p>
+      </div>
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
+          <input id="loginUsername" type="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="staff@yourcenter.com" required/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
+          <input id="loginPassword" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required/>
+        </div>
+        <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow">เข้าสู่ระบบ</button>
+      </form>
+      <p id="loginError" class="hidden mt-4 text-sm text-red-600 text-center"></p>
+      <div class="mt-4 text-xs text-gray-500 text-center">
+        หากยังไม่มีผู้ใช้ โปรดสร้างใน Firebase Console → Authentication → Users
+      </div>
+    </div>
   </div>
 
-  <!-- Dashboard -->
-  <div id="dashboard" class="hidden">
-    <header class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-        <h1 class="text-lg md:text-xl font-bold">📊 หลังบ้าน — รายการ/รายงานลูกค้า</h1>
-        <div class="flex items-center gap-2">
-          <span id="userBadge" class="text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">-</span>
-          <button id="logoutBtn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
-        </div>
+  <!-- ========== Topbar ========== -->
+  <header id="topbar" class="hidden bg-white/80 backdrop-blur sticky top-0 z-40 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">📊</span>
+        <h1 class="text-lg md:text-xl font-semibold text-gray-800">รายงานลูกค้า (Admin)</h1>
       </div>
-    </header>
-
-    <main class="container mx-auto px-4 py-6">
-      <!-- Tabs -->
-      <div class="mb-4 border-b">
-        <nav class="flex gap-2">
-          <button id="tabList" class="px-4 py-2 border-b-2 tab-active">📋 รายการ</button>
-          <button id="tabReport" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">📈 รายงาน</button>
-          <button id="tabMonthly" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">🗓️ รายเดือน</button>
-        </nav>
+      <div class="flex items-center gap-3">
+        <span id="roleBadge" class="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1">Role: -</span>
+        <span id="currentUserBadge" class="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1">ผู้ใช้: -</span>
+        <button id="logoutBtn" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
       </div>
+    </div>
+  </header>
 
-      <!-- ===== LIST PAGE ===== -->
-      <section id="pageList" class="bg-white rounded-xl shadow p-5">
-        <div class="flex items-center justify-between mb-4">
+  <!-- ========== App Main ========== -->
+  <main id="app" class="hidden">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+
+      <!-- Filters -->
+      <section class="bg-white rounded-xl shadow p-4 md:p-6 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-3">
           <div>
-            <h2 class="text-xl font-bold">รายการลูกค้า</h2>
-            <p class="text-sm text-gray-500">สิทธิ์ของคุณ: <b id="roleLabel">-</b></p>
+            <label class="text-sm text-slate-600">จากวันที่</label>
+            <input id="fromDate" type="date" class="block border rounded-lg px-3 py-2 min-w-[200px]">
           </div>
-          <div class="flex items-center gap-2">
-            <button id="exportCsvBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-sm">⬇️ Export CSV</button>
-            <button id="printBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm">🖨️ พิมพ์รายงาน</button>
-            <span class="text-sm text-gray-600">ทั้งหมด: <b id="total">0</b> คน</span>
+          <div>
+            <label class="text-sm text-slate-600">ถึงวันที่</label>
+            <input id="toDate" type="date" class="block border rounded-lg px-3 py-2 min-w-[200px]">
+          </div>
+          <div class="flex-1"></div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnApply" class="bg-blue-600 text-white px-4 py-2 rounded-lg">นำไปใช้</button>
+            <button id="btnCSV" class="bg-emerald-600 text-white px-4 py-2 rounded-lg">ส่งออก CSV</button>
+            <button id="btnXLSX" class="bg-teal-600 text-white px-4 py-2 rounded-lg">ส่งออก Excel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dynamic Report One-Chart -->
+      <section class="bg-white rounded-xl shadow p-4 md:p-6 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <h2 class="text-xl font-semibold">รายงานแบบสลับหัวข้อ</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <select id="reportTopic" class="border rounded-lg px-3 py-2">
+              <option value="leads_time">Leads ต่อเดือน (เส้น)</option>
+              <option value="status_bar">จำนวนตามสถานะ (แท่ง)</option>
+              <option value="room_bar">จำนวนตามห้อง (แท่ง)</option>
+              <option value="avg_price_group">ค่าเฉลี่ยราคา ตามกลุ่ม (สถานะ/เพศ/ห้อง/เดือน)</option>
+              <option value="avg_age_group">ค่าเฉลี่ยอายุ ตามกลุ่ม (สถานะ/เพศ/ห้อง/เดือน)</option>
+              <option value="rev_month_room">รายได้ต่อเดือน (stacked ตามห้อง)</option>
+              <option value="cust_month_status">ลูกค้าต่อเดือน (stacked ตามสถานะ)</option>
+              <option value="funnel">Funnel (กรวย)</option>
+            </select>
+
+            <select id="groupBy" class="border rounded-lg px-3 py-2">
+              <option value="status">สถานะ</option>
+              <option value="gender">เพศ</option>
+              <option value="roomType">ห้อง</option>
+              <option value="month">เดือน</option>
+            </select>
           </div>
         </div>
 
+        <div class="mt-4">
+          <canvas id="dynamicChart" height="120"></canvas>
+        </div>
+        <p id="chartNote" class="text-xs text-gray-500 mt-3"></p>
+      </section>
+
+      <!-- Raw Table (peek) -->
+      <section class="bg-white rounded-xl shadow p-4 md:p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold">ตารางข้อมูล (แสดงเฉพาะช่วงที่เลือก)</h2>
+          <div class="text-sm text-gray-500">ทั้งหมด: <span id="countFiltered">0</span> รายการ</div>
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
-            <thead>
-              <tr class="bg-gray-100">
-                <th class="p-2 text-left">#</th>
-                <th class="p-2 text-left">วันที่</th>
-                <th class="p-2 text-left">ชื่อ</th>
-                <th class="p-2 text-left">เบอร์</th>
-                <th class="p-2 text-left">เพศ/อายุ</th>
-                <th class="p-2 text-left">ห้อง</th>
-                <th class="p-2 text-left">ราคา</th>
-                <th class="p-2 text-left">สถานะ</th>
-                <th class="p-2 text-left">จัดการ</th>
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left">#</th>
+                <th class="px-3 py-2 text-left">วันที่</th>
+                <th class="px-3 py-2 text-left">ชื่อ</th>
+                <th class="px-3 py-2 text-left">เบอร์</th>
+                <th class="px-3 py-2 text-left">เพศ/อายุ</th>
+                <th class="px-3 py-2 text-left">ห้อง</th>
+                <th class="px-3 py-2 text-left">ราคา</th>
+                <th class="px-3 py-2 text-left">สถานะ</th>
               </tr>
             </thead>
-            <tbody id="list"></tbody>
+            <tbody id="tableBody" class="divide-y"></tbody>
           </table>
         </div>
       </section>
-
-      <!-- ===== REPORT PAGE ===== -->
-      <section id="pageReport" class="hidden">
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow p-5 mb-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xl font-bold">รายงาน & ตัวกรอง</h2>
-            <div class="text-sm text-gray-600">ข้อมูลจาก Firestore: <b id="countAll">0</b> รายการ</div>
-          </div>
-          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div><label class="text-xs text-gray-500">วันที่เริ่ม</label><input id="fStart" type="date" class="w-full border rounded-lg px-3 py-2"></div>
-            <div><label class="text-xs text-gray-500">วันที่สิ้นสุด</label><input id="fEnd" type="date" class="w-full border rounded-lg px-3 py-2"></div>
-            <div><label class="text-xs text-gray-500">สถานะ</label><select id="fStatus" class="w-full border rounded-lg px-3 py-2">
-              <option value="">ทั้งหมด</option>
-              <option>ใหม่</option>
-              <option>หาข้อมูลเปรียบเทียบ</option>
-              <option>ยังไม่ใช้บริการตอนนี้</option>
-              <option>รอตัดสินใจ</option>
-              <option>รอทางการแพทย์</option>
-              <option>รอดูสถานที่</option>
-              <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-              <option>ปิดการขายสำเร็จ</option>
-              <option>ยกเลิกการขาย</option>
-            </select></div>
-            <div><label class="text-xs text-gray-500">ประเภทห้อง</label><select id="fRoom" class="w-full border rounded-lg px-3 py-2">
-              <option value="">ทั้งหมด</option>
-              <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
-              <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
-              <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
-            </select></div>
-            <div><label class="text-xs text-gray-500">เพศ</label><select id="fGender" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ชาย</option><option>หญิง</option></select></div>
-            <div class="grid grid-cols-2 gap-2">
-              <div><label class="text-xs text-gray-500">ราคา ≥</label><input id="fMin" type="number" class="w-full border rounded-lg px-3 py-2"></div>
-              <div><label class="text-xs text-gray-500">ราคา ≤</label><input id="fMax" type="number" class="w-full border rounded-lg px-3 py-2"></div>
-            </div>
-          </div>
-          <div class="mt-3 flex gap-2">
-            <button id="btnApply" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">ใช้ตัวกรอง</button>
-            <button id="btnReset" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
-            <button id="btnExportFiltered" class="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export (Filtered)</button>
-            <button id="btnPrintFiltered" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">🖨️ พิมพ์ (Filtered)</button>
-            <span class="ml-auto text-sm text-gray-600">ผลลัพธ์: <b id="countFiltered">0</b> รายการ</span>
-          </div>
-        </div>
-
-        <!-- KPI -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ทั้งหมด</div><div class="text-2xl font-bold" id="kAll">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ช่วงที่เลือก</div><div class="text-2xl font-bold" id="kPeriod">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">ปิดการขาย</div><div class="text-2xl font-bold" id="kWon">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Win Rate</div><div class="text-2xl font-bold" id="kWinRate">0%</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Avg. Price</div><div class="text-2xl font-bold" id="kAvgPrice">฿0</div></div>
-        </div>
-
-        <!-- Charts -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Leads Over Time</div><canvas id="chTime"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Status Breakdown</div><canvas id="chStatus"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Room Breakdown</div><canvas id="chRoom"></canvas></div>
-        </div>
-      </section>
-
-      <!-- ===== MONTHLY PAGE ===== -->
-      <section id="pageMonthly" class="hidden">
-        <div class="bg-white rounded-xl shadow p-5 mb-4">
-          <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold">รายงานรายเดือน</h2>
-            <select id="mYear" class="border rounded-lg px-3 py-2"></select>
-            <button id="mRefresh" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">อัปเดต</button>
-            <button id="mExport" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export</button>
-            <button id="mPrint" class="bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm">🖨️ พิมพ์</button>
-            <span class="ml-auto text-sm text-gray-600">เดือนที่มีข้อมูล: <b id="mCount">0</b></span>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Leads vs Won</div><canvas id="chMonth"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Win Rate (%)</div><canvas id="chMonthRate"></canvas></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <div class="font-semibold mb-2">ตารางสรุปรายเดือน</div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead><tr class="bg-gray-100">
-                <th class="p-2 text-left">เดือน (YYYY-MM)</th>
-                <th class="p-2 text-right">Leads</th>
-                <th class="p-2 text-right">Won</th>
-                <th class="p-2 text-right">Win Rate</th>
-                <th class="p-2 text-right">Avg Price</th>
-              </tr></thead>
-              <tbody id="tbMonthly"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Modal แก้สถานะ -->
-  <template id="statusModalTpl">
-    <div class="modal-backdrop">
-      <div class="modal-card">
-        <h3 class="text-lg font-bold mb-3">แก้ไขสถานะลูกค้า</h3>
-        <select id="modalStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
-          <option>ใหม่</option>
-          <option>หาข้อมูลเปรียบเทียบ</option>
-          <option>ยังไม่ใช้บริการตอนนี้</option>
-          <option>รอตัดสินใจ</option>
-          <option>รอทางการแพทย์</option>
-          <option>รอดูสถานที่</option>
-          <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-          <option>ปิดการขายสำเร็จ</option>
-          <option>ยกเลิกการขาย</option>
-        </select>
-        <div class="flex gap-2">
-          <button id="okBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5">บันทึก</button>
-          <button id="cancelBtn" class="flex-1 bg-gray-200 text-gray-800 rounded-lg py-2.5">ยกเลิก</button>
-        </div>
-      </div>
     </div>
-  </template>
+  </main>
 
-  <!-- Script -->
+  <!-- ========== Scripts ========== -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-    import {
-      getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-      setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-    import {
-      getFirestore, collection, onSnapshot, query, orderBy,
-      deleteDoc, doc, updateDoc, getDoc, serverTimestamp, deleteField
-    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    /********** Imports **********/
     import { firebaseConfig } from "./firebaseConfig.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import "https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js";
+    // Funnel (ถ้าต้องการกรวยจริง ๆ)
+    import "https://cdn.jsdelivr.net/npm/chartjs-chart-funnel@4";
 
-    // ---- Init ----
-    const app  = initializeApp(firebaseConfig);
+    /********** Init **********/
+    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db   = getFirestore(app);
-    await setPersistence(auth, browserLocalPersistence);
+    const colRef = collection(db, 'customers');
 
-    // ---- Refs ----
-    const loginScreen = document.getElementById("loginScreen");
-    const dashboard   = document.getElementById("dashboard");
-    const loginError  = document.getElementById("loginError");
-    const userBadge   = document.getElementById("userBadge");
-    const roleLabel   = document.getElementById("roleLabel");
-    const listEl      = document.getElementById("list");
-    const totalEl     = document.getElementById("total");
+    /********** UI refs **********/
+    const $ = (id) => document.getElementById(id);
+    const loginScreen = $('loginScreen');
+    const loginForm   = $('loginForm');
+    const topbar      = $('topbar');
+    const appMain     = $('app');
+    const roleBadge   = $('roleBadge');
+    const userBadge   = $('currentUserBadge');
 
-    const tabListBtn   = document.getElementById('tabList');
-    const tabReportBtn = document.getElementById('tabReport');
-    const tabMonthlyBtn= document.getElementById('tabMonthly');
-    const pageList     = document.getElementById('pageList');
-    const pageReport   = document.getElementById('pageReport');
-    const pageMonthly  = document.getElementById('pageMonthly');
+    /********** State **********/
+    let currentItems = [];      // snapshot ล่าสุด (ทั้งหมด)
+    let filteredItems = [];     // ตามช่วงวันที่ที่เลือก
+    let unsubscribe = null;
+    const STATUS_ORDER = [
+      'ใหม่','หาข้อมูลเปรียบเทียบ','ยังไม่ใช้บริการตอนนี้','รอดูสถานที่',
+      'ดูสถานที่แล้วรอตัดสินใจ','รอตัดสินใจ','รอทางการแพทย์','ปิดการขายสำเร็จ','ยกเลิกการขาย'
+    ];
 
-    // Filters
-    const fStart = document.getElementById('fStart');
-    const fEnd   = document.getElementById('fEnd');
-    const fStatus= document.getElementById('fStatus');
-    const fRoom  = document.getElementById('fRoom');
-    const fGender= document.getElementById('fGender');
-    const fMin   = document.getElementById('fMin');
-    const fMax   = document.getElementById('fMax');
+    /********** Helpers **********/
+    const fmtDate = (iso) => {
+      const d = new Date(iso);
+      return isNaN(d) ? '-' : d.toLocaleDateString('th-TH', {year:'numeric', month:'short', day:'numeric'});
+    };
+    const fmtMonth = (iso) => {
+      const d = new Date(iso);
+      return isNaN(d) ? 'ไม่ทราบเดือน' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    };
+    const inRange = (dateISO, fromISO, toISO) => {
+      if (!dateISO) return false;
+      const t = new Date(dateISO).getTime();
+      if (isNaN(t)) return false;
+      const f = fromISO ? new Date(fromISO).getTime() : -Infinity;
+      const to= toISO   ? new Date(toISO).getTime()   :  Infinity;
+      return t >= f && t <= (to + 24*3600*1000 - 1);
+    };
+    const numberTH = (n) => new Intl.NumberFormat('th-TH').format(n||0);
 
-    // KPI
-    const kAll = document.getElementById('kAll');
-    const kPeriod = document.getElementById('kPeriod');
-    const kWon = document.getElementById('kWon');
-    const kWinRate = document.getElementById('kWinRate');
-    const kAvgPrice = document.getElementById('kAvgPrice');
-    const countAllEl = document.getElementById('countAll');
-    const countFilteredEl = document.getElementById('countFiltered');
-
-    // Charts
-    let chTime, chStatus, chRoom, chMonth, chMonthRate;
-
-    // Monthly
-    const mYearSel = document.getElementById('mYear');
-    const mRefresh = document.getElementById('mRefresh');
-    const mExport  = document.getElementById('mExport');
-    const mPrint   = document.getElementById('mPrint');
-    const mCount   = document.getElementById('mCount');
-
-    // ---- Utils ----
-    const fmtTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
-    const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
-    const escapeHtml=(s)=>(s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-    function getDateFromDoc(c){
-      if (c.createdAt && typeof c.createdAt.toDate === 'function') return c.createdAt.toDate();
-      if (c.date){ const d = new Date(c.date + 'T00:00:00'); if (!isNaN(d)) return d; }
-      return null;
-    }
-    function getClosedDate(c){
-      if (c.closedAt && typeof c.closedAt.toDate === 'function') return c.closedAt.toDate();
-      return null;
+    function setDefaultRange() {
+      const to = new Date();
+      const from = new Date(); from.setDate(from.getDate() - 89);
+      $('toDate').valueAsDate = to;
+      $('fromDate').valueAsDate = from;
     }
 
-    // ---- Auth: submit ----
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    /********** Auth **********/
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      loginError.classList.add("hidden");
-      loginError.textContent = "";
+      const email = $('loginUsername').value.trim();
+      const pass  = $('loginPassword').value;
       try {
-        await signInWithEmailAndPassword(
-          auth,
-          document.getElementById("email").value,
-          document.getElementById("password").value
-        );
+        await signInWithEmailAndPassword(auth, email, pass);
       } catch (err) {
-        console.error('Login failed:', err.code, err.message);
-        const map = {
-          "auth/operation-not-allowed": "ยังไม่ได้เปิด Email/Password ใน Authentication > Sign-in method",
-          "auth/invalid-api-key": "firebaseConfig ผิด โปรดตรวจสอบ apiKey / project",
-          "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
-          "auth/user-not-found": "ไม่พบบัญชีผู้ใช้",
-          "auth/wrong-password": "รหัสผ่านไม่ถูกต้อง",
-          "auth/network-request-failed": "ปัญหาเครือข่าย/อย่าเปิดไฟล์แบบ file:// ให้รันผ่าน localhost",
-        };
-        loginError.textContent = "เข้าสู่ระบบไม่สำเร็จ: " + (map[err.code] || `${err.code} — ${err.message}`);
-        loginError.classList.remove("hidden");
+        const box = $('loginError');
+        box.textContent = 'เข้าสู่ระบบไม่สำเร็จ: ' + (err?.code || err?.message || 'unknown');
+        box.classList.remove('hidden');
       }
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+    $('logoutBtn').addEventListener('click', async () => {
+      await signOut(auth);
+    });
 
-    // ---- Auth: state ----
-    let isAdmin=false, isStaff=false;
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        dashboard.classList.add("hidden");
-        loginScreen.classList.remove("hidden");
+        if (unsubscribe) unsubscribe();
+        loginScreen.classList.remove('hidden');
+        topbar.classList.add('hidden');
+        appMain.classList.add('hidden');
         return;
       }
-      try {
-        const roleDoc = await getDoc(doc(db, 'roles', user.uid));
-        const role = roleDoc.exists() ? (roleDoc.data().role || 'viewer') : 'viewer';
-        isAdmin = role === "admin";
-        isStaff = role === "staff";
+      // refresh token -> read claims
+      await user.getIdToken(true);
+      const token = await user.getIdTokenResult();
+      const role  = token.claims?.role;
+      userBadge.textContent = 'ผู้ใช้: ' + (user.email || user.uid);
+      roleBadge.textContent = 'Role: ' + (role || '-');
 
-        roleLabel.textContent = role;
-        userBadge.textContent = `${user.email || user.uid} (${role})`;
-
-        if (!(isAdmin || isStaff)) {
-          loginError.textContent = "ล็อกอินสำเร็จ แต่ยังไม่มีสิทธิ์เข้าหลังบ้าน — ตั้ง roles/{uid}.role เป็น admin หรือ staff";
-          loginError.classList.remove("hidden");
-          dashboard.classList.add("hidden");
-          loginScreen.classList.remove("hidden");
-          return;
-        }
-
-        loginScreen.classList.add("hidden");
-        dashboard.classList.remove("hidden");
-        setTab('list');
-        loadCustomers();
-
-      } catch (e) {
-        console.error('อ่าน role ไม่สำเร็จ:', e);
-        alert('อ่านสิทธิ์ไม่สำเร็จ: ' + e.message);
+      if (!['admin','staff'].includes(role)) {
+        alert('บัญชีนี้ไม่มีสิทธิ์เข้าหลังบ้าน');
         await signOut(auth);
-      }
-    });
-
-    // ---- Tabs ----
-    function setTab(tab){
-      const activate=(btn,sec,active)=>{
-        if(active){ btn.classList.add('tab-active'); btn.classList.remove('text-gray-500','border-transparent'); sec.classList.remove('hidden'); }
-        else{ btn.classList.remove('tab-active'); btn.classList.add('text-gray-500','border-transparent'); sec.classList.add('hidden'); }
-      };
-      activate(tabListBtn, pageList, tab==='list');
-      activate(tabReportBtn, pageReport, tab==='report');
-      activate(tabMonthlyBtn, pageMonthly, tab==='monthly');
-      if (tab==='report') renderReports();
-      if (tab==='monthly') renderMonthly();
-    }
-    tabListBtn.addEventListener('click', ()=>setTab('list'));
-    tabReportBtn.addEventListener('click', ()=>setTab('report'));
-    tabMonthlyBtn.addEventListener('click', ()=>setTab('monthly'));
-
-    // ---- Data ----
-    let currentItems = [];
-    let filteredItems = [];
-
-    function loadCustomers(){
-      const qy = query(collection(db,"customers"), orderBy("createdAt","desc"));
-      onSnapshot(qy, (snap)=>{
-        currentItems = snap.docs.map((d,i)=>({ id:d.id, idx:i+1, ...d.data() }));
-        renderTable(currentItems);
-        countAllEl.textContent = currentItems.length;
-        ensureDefaultDateRange();
-        applyFilters();
-      });
-    }
-
-    // ---- List table ----
-    function renderTable(items){
-      if (!items.length){
-        totalEl.textContent = 0;
-        listEl.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-500">ยังไม่มีข้อมูล</td></tr>`;
         return;
       }
-      totalEl.textContent = items.length;
-      listEl.innerHTML = items.map(c=>{
-        const actionBtns = `
-          <button class="text-blue-600 hover:underline mr-3" onclick="editStatus('${c.id}','${(c.decision||'').replace(/'/g,"&#39;")}')">✏️ แก้สถานะ</button>
-          ${isAdmin ? `<button class="text-red-600 hover:underline" onclick="deleteCustomer('${c.id}')">🗑️ ลบ</button>` : `<span class="text-gray-400">-</span>`}
-        `;
-        return `<tr class="border-t hover:bg-gray-50">
-          <td class="p-2">${c.idx}</td>
-          <td class="p-2">${fmtTH(c.date)}</td>
-          <td class="p-2 font-medium">${escapeHtml(c.name)}</td>
-          <td class="p-2">${escapeHtml(c.phone)}</td>
-          <td class="p-2">${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
-          <td class="p-2">${escapeHtml(c.roomType)}</td>
-          <td class="p-2">฿${fmtNum(c.price)}</td>
-          <td class="p-2">${escapeHtml(c.decision||'-')}</td>
-          <td class="p-2">${actionBtns}</td>
-        </tr>`;
-      }).join('');
-    }
 
-    window.deleteCustomer = async (id)=>{
-      if (!isAdmin) return alert("อนุญาตเฉพาะผู้ดูแลระบบ");
-      if (confirm("ยืนยันการลบข้อมูลลูกค้ารายการนี้?")){
-        await deleteDoc(doc(db,"customers",id));
-      }
-    };
+      // show app
+      loginScreen.classList.add('hidden');
+      topbar.classList.remove('hidden');
+      appMain.classList.remove('hidden');
 
-    window.editStatus = (id, currentStatus)=>{
-      const tpl = document.getElementById('statusModalTpl').content.cloneNode(true);
-      const modal = tpl.querySelector('.modal-backdrop');
-      const select = tpl.querySelector('#modalStatus');
-      select.value = currentStatus || 'รอตัดสินใจ';
-      tpl.querySelector('#okBtn').addEventListener('click', async ()=>{
-        const newStatus = select.value;
-        const ref = doc(db,'customers',id);
-        if (newStatus === 'ปิดการขายสำเร็จ'){
-          await updateDoc(ref, { decision: newStatus, closedAt: serverTimestamp() });
-        } else {
-          await updateDoc(ref, { decision: newStatus, closedAt: deleteField() });
-        }
-        document.body.removeChild(modal);
+      // subscribe data realtime
+      if (unsubscribe) unsubscribe();
+      const q = query(colRef, orderBy('createdAt', 'desc'));
+      unsubscribe = onSnapshot(q, (snap) => {
+        currentItems = [];
+        snap.forEach(d => currentItems.push({ id: d.id, ...d.data() }));
+        applyFiltersAndRender(); // refresh table/chart
       });
-      tpl.querySelector('#cancelBtn').addEventListener('click', ()=> document.body.removeChild(modal));
-      document.body.appendChild(modal);
-    };
-
-    // ---- Export / Print (list) ----
-    document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
-      exportCsv(currentItems);
-    });
-    document.getElementById('printBtn').addEventListener('click', ()=>{
-      printItems(currentItems, "รายงานลูกค้า (ทั้งหมด)");
     });
 
-    const csvEscape=(s)=>(s??'').toString().replace(/\r?\n/g,' ').trim();
-    const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
-
-    function exportCsv(items){
-      if (!items.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
-      const header = ['ลำดับ','วันที่','ชื่อ','เบอร์','เพศ','อายุ','ห้อง','ราคา','สถานะ','closedAt'];
-      const rows = items.map((c,i)=>[
-        (i+1), fmtTH(c.date), csvEscape(c.name), csvEscape(c.phone),
-        c.gender, c.age, csvEscape(c.roomType),
-        c.price, csvEscape(c.decision||''),
-        (getClosedDate(c)? getClosedDate(c).toISOString() : '')
-      ]);
-      const csv = [header, ...rows].map(r=>r.map(toCsvCell).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    }
-
-    function printItems(items, title="รายงานลูกค้า"){
-      if (!items.length) return alert('ไม่มีข้อมูลลูกค้าให้พิมพ์');
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${title}</title>
-      <style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
-      h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
-      th{background:#f6f7f9}</style></head><body>
-      <h1>📋 ${title}</h1>
-      <div>พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
-      <table><thead><tr>
-        <th>#</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>เพศ/อายุ</th><th>ห้อง</th><th>ราคา</th><th>สถานะ</th><th>closedAt</th>
-      </tr></thead><tbody>
-        ${items.map((c,i)=>`<tr>
-          <td>${i+1}</td>
-          <td>${fmtTH(c.date)}</td>
-          <td>${escapeHtml(c.name)}</td>
-          <td>${escapeHtml(c.phone)}</td>
-          <td>${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
-          <td>${escapeHtml(c.roomType)}</td>
-          <td>${fmtNum(c.price)}</td>
-          <td>${escapeHtml(c.decision||'-')}</td>
-          <td>${(getClosedDate(c)? escapeHtml(getClosedDate(c).toLocaleString('th-TH')) : '-')}</td>
-        </tr>`).join('')}
-      </tbody></table></body></html>`;
-      const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
-    }
-
-    // ---- Reports ----
-    function ensureDefaultDateRange(){
-      if (!fStart.value || !fEnd.value){
-        const today = new Date();
-        const start = new Date(); start.setDate(today.getDate() - 90);
-        fStart.value = start.toISOString().slice(0,10);
-        fEnd.value   = today.toISOString().slice(0,10);
-      }
-    }
-
-    function applyFilters(){
-      const min = fMin.value ? Number(fMin.value) : -Infinity;
-      const max = fMax.value ? Number(fMax.value) : Infinity;
-      const status = fStatus.value;
-      const room = fRoom.value;
-      const gender = fGender.value;
-      const start = fStart.value ? new Date(fStart.value + 'T00:00:00') : null;
-      const end   = fEnd.value   ? new Date(fEnd.value   + 'T23:59:59') : null;
-
-      filteredItems = currentItems.filter(c=>{
-        const dt = getDateFromDoc(c);
-        if (start && dt && dt < start) return false;
-        if (end && dt && dt > end) return false;
-        if (status && (c.decision||'') !== status) return false;
-        if (room && (c.roomType||'') !== room) return false;
-        if (gender && (c.gender||'') !== gender) return false;
-        const price = Number(c.price||0);
-        if (price < min || price > max) return false;
-        return true;
-      });
-
-      countFilteredEl.textContent = filteredItems.length;
-      kAll.textContent = currentItems.length;
-      kPeriod.textContent = filteredItems.length;
-
-      const wonItems = filteredItems.filter(c=> (c.decision||'') === 'ปิดการขายสำเร็จ');
-      kWon.textContent = wonItems.length;
-      kWinRate.textContent = filteredItems.length ? ((wonItems.length/filteredItems.length*100).toFixed(1)+'%') : '0%';
-
-      const avgPrice = filteredItems.length ? Math.round(filteredItems.reduce((a,c)=>a+Number(c.price||0),0)/filteredItems.length) : 0;
-      kAvgPrice.textContent = '฿' + fmtNum(avgPrice);
-
-      renderCharts(filteredItems);
-    }
-
-    function renderReports(){ applyFilters(); }
-
-    document.getElementById('btnApply').addEventListener('click', applyFilters);
-    document.getElementById('btnReset').addEventListener('click', ()=>{
-      fStatus.value=''; fRoom.value=''; fGender.value=''; fMin.value=''; fMax.value='';
-      ensureDefaultDateRange(); applyFilters();
-    });
-    document.getElementById('btnExportFiltered').addEventListener('click', ()=> exportCsv(filteredItems));
-    document.getElementById('btnPrintFiltered').addEventListener('click', ()=> printItems(filteredItems, 'รายงานลูกค้า (Filtered)'));
-
-    function renderCharts(items){
-      [chTime, chStatus, chRoom].forEach(c=> c && c.destroy());
-
-      // by day
-      const byDay = new Map();
-      items.forEach(c=>{
-        const dt = getDateFromDoc(c); if (!dt) return;
-        const key = dt.toISOString().slice(0,10);
-        byDay.set(key, (byDay.get(key)||0)+1);
-      });
-      const labelsTime = Array.from(byDay.keys()).sort();
-      const dataTime = labelsTime.map(k=>byDay.get(k));
-      chTime = new Chart(document.getElementById('chTime'), {
-        type: 'line',
-        data: { labels: labelsTime, datasets: [{ label: 'Leads', data: dataTime }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      // status
-      const mStatus = new Map();
-      items.forEach(c=>{ const k=c.decision||'-'; mStatus.set(k,(mStatus.get(k)||0)+1); });
-      const labelsStatus = Array.from(mStatus.keys());
-      const dataStatus = labelsStatus.map(k=>mStatus.get(k));
-      chStatus = new Chart(document.getElementById('chStatus'), {
-        type: 'doughnut',
-        data: { labels: labelsStatus, datasets: [{ data: dataStatus }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      // room
-      const mRoom = new Map();
-      items.forEach(c=>{ const k=c.roomType||'-'; mRoom.set(k,(mRoom.get(k)||0)+1); });
-      const labelsRoom = Array.from(mRoom.keys());
-      const dataRoom = labelsRoom.map(k=>mRoom.get(k));
-      chRoom = new Chart(document.getElementById('chRoom'), {
-        type: 'bar',
-        data: { labels: labelsRoom, datasets: [{ label: 'จำนวน', data: dataRoom }] },
-        options: { responsive: true, maintainAspectRatio: false, scales:{ y:{ beginAtZero:true } } }
-      });
-    }
-
-    // ---- Monthly ----
-    function yearFromDate(d){ return d.getFullYear(); }
-    function ymKey(d){ return d.toISOString().slice(0,7); }
-
-    function getAllYearsFromData(items){
-      const s = new Set();
-      items.forEach(c=>{ const dt=getDateFromDoc(c); if (dt) s.add(yearFromDate(dt)); });
-      const arr = Array.from(s).sort();
-      return arr.length ? arr : [new Date().getFullYear()];
-    }
-
-    function ensureMonthlyYearOptions(){
-      const years = getAllYearsFromData(currentItems);
-      mYearSel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
-      if (!mYearSel.value && years.length){ mYearSel.value = years[years.length-1]; }
-    }
-
-    function buildMonthlyData(){
-      const year = Number(mYearSel.value || new Date().getFullYear());
-      const byMonth = {};
-      filteredItems.forEach(c=>{
-        const dt = getDateFromDoc(c); if (!dt || yearFromDate(dt)!==year) return;
-        const key = ymKey(dt);
-        byMonth[key] ||= { total:0, won:0, sumPrice:0 };
-        byMonth[key].total++;
-        byMonth[key].sumPrice += Number(c.price||0);
-        if ((c.decision||'')==='ปิดการขายสำเร็จ'){ byMonth[key].won++; }
-      });
-      const months = [...Array(12)].map((_,i)=>{
-        const m = String(i+1).padStart(2,'0');
-        const key = `${year}-${m}`;
-        const v = byMonth[key] || { total:0, won:0, sumPrice:0 };
-        const avgPrice = v.total ? Math.round(v.sumPrice / v.total) : 0;
-        const winRate = v.total ? (v.won / v.total * 100) : 0;
-        return { key, ...v, avgPrice, winRate };
-      });
-      return months;
-    }
-
-    function renderMonthly(){
-      ensureMonthlyYearOptions();
-      applyFilters(); // ใช้ตัวกรองเดียวกับหน้า Report
-
-      const months = buildMonthlyData();
-      const labels = months.map(x=>x.key);
-      const totals = months.map(x=>x.total);
-      const wons   = months.map(x=>x.won);
-      const rates  = months.map(x=> Math.round(x.winRate*10)/10 );
-      mCount.textContent = months.filter(x=>x.total>0).length;
-
-      chMonth && chMonth.destroy();
-      chMonth = new Chart(document.getElementById('chMonth'), {
-        type: 'bar',
-        data: { labels, datasets: [
-          { label: 'Leads', data: totals },
-          { label: 'Won',   data: wons }
-        ]},
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-      });
-
-      chMonthRate && chMonthRate.destroy();
-      chMonthRate = new Chart(document.getElementById('chMonthRate'), {
-        type: 'line',
-        data: { labels, datasets: [{ label:'Win Rate (%)', data: rates }] },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, max:100 } } }
-      });
-
-      const tb = document.getElementById('tbMonthly');
-      tb.innerHTML = months.map(m=>`
-        <tr class="border-t">
-          <td class="p-2">${m.key}</td>
-          <td class="p-2 text-right">${m.total}</td>
-          <td class="p-2 text-right">${m.won}</td>
-          <td class="p-2 text-right">${m.total? (m.winRate.toFixed(1)+'%') : '0%'}</td>
-          <td class="p-2 text-right">฿${fmtNum(m.avgPrice)}</td>
+    /********** Table **********/
+    function renderTable(items) {
+      $('countFiltered').textContent = numberTH(items.length);
+      const rows = items.map((c,i)=>`
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">${i+1}</td>
+          <td class="px-3 py-2">${fmtDate(c.date)}</td>
+          <td class="px-3 py-2">${c.name||'-'}</td>
+          <td class="px-3 py-2">${c.phone||'-'}</td>
+          <td class="px-3 py-2">${(c.gender||'-')} / ${c.age||'-'} ปี</td>
+          <td class="px-3 py-2">${c.roomType||'-'}</td>
+          <td class="px-3 py-2">฿${numberTH(c.price||0)}</td>
+          <td class="px-3 py-2">${c.decision||'-'}</td>
         </tr>
       `).join('');
+      $('tableBody').innerHTML = rows || `<tr><td colspan="8" class="px-3 py-6 text-center text-gray-500">ไม่พบข้อมูล</td></tr>`;
     }
 
-    mRefresh.addEventListener('click', renderMonthly);
-    mYearSel.addEventListener('change', renderMonthly);
-    mExport.addEventListener('click', ()=>{
-      const months = buildMonthlyData();
-      const header = ['เดือน(YYYY-MM)','Leads','Won','WinRate(%)','AvgPrice'];
-      const rows = months.map(m=>[ m.key, m.total, m.won, (m.total? m.winRate.toFixed(1) : '0'), m.avgPrice ]);
-      const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
-      const csv = [header, ...rows].map(r=>r.map(toCsvCell).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    /********** Aggregations (for chart) **********/
+    function countByMonth(items) {
+      const map = {};
+      items.forEach(c => { const m = fmtMonth(c.date); map[m]=(map[m]||0)+1; });
+      const labels = Object.keys(map).sort();
+      return { labels, data: labels.map(l => map[l]) };
+    }
+    function countByField(items, field, orderLabels) {
+      const m = {};
+      items.forEach(c => { const k = c[field] || 'ไม่ระบุ'; m[k]=(m[k]||0)+1; });
+      let labels = Object.keys(m);
+      if (orderLabels) labels = orderLabels.filter(k => k in m).concat(labels.filter(k=>!orderLabels.includes(k)));
+      return { labels, data: labels.map(l => m[l] || 0) };
+    }
+    function avgByField(items, field, valueField) {
+      const sum = {}, cnt = {};
+      items.forEach(c => {
+        const k = (field==='month') ? fmtMonth(c.date) : (c[field] || 'ไม่ระบุ');
+        const v = Number(c[valueField] || 0); if (!Number.isFinite(v)) return;
+        sum[k]=(sum[k]||0)+v; cnt[k]=(cnt[k]||0)+1;
+      });
+      const labels = Object.keys(sum).sort();
+      const data = labels.map(l => sum[l]/(cnt[l]||1));
+      return { labels, data };
+    }
+    function stackedMonthByField(items, stackField, valueMode='count') {
+      const months = new Set(), cats = new Set(), map = {};
+      items.forEach(c => {
+        const m = fmtMonth(c.date);
+        const cat = c[stackField] || 'ไม่ระบุ';
+        months.add(m); cats.add(cat);
+        map[cat] = map[cat] || {};
+        map[cat][m] = (map[cat][m]||0) + (valueMode==='sumPrice' ? Number(c.price||0) : 1);
+      });
+      const labels = Array.from(months).sort();
+      const categories = Array.from(cats);
+      const datasets = categories.map(cat => ({ label: cat, data: labels.map(m=>map[cat]?.[m]||0), stack:'s1' }));
+      return { labels, datasets };
+    }
+
+    /********** Chart (dynamic) **********/
+    let chart;
+    function renderChart(cfg) {
+      const ctx = $('dynamicChart').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, cfg);
+    }
+    function labelOf(groupBy) {
+      return ({ status:'สถานะ', gender:'เพศ', roomType:'ห้อง', month:'เดือน' }[groupBy] || groupBy);
+    }
+    function updateChart(items) {
+      const topic  = $('reportTopic').value;
+      const groupBy= $('groupBy').value;
+
+      if (!items.length) {
+        renderChart({ type:'bar', data:{ labels:['ไม่มีข้อมูล'], datasets:[{label:'', data:[0]}] } });
+        $('chartNote').textContent = 'ไม่พบข้อมูลในช่วงที่เลือก';
+        return;
+      }
+
+      let cfg, note='';
+
+      switch(topic) {
+        case 'leads_time': {
+          const { labels, data } = countByMonth(items);
+          cfg = { type:'line', data:{ labels, datasets:[{label:'Leads', data, tension:.3}] }, options:{responsive:true} };
+          note = 'จำนวน Leads ต่อเดือน';
+          break;
+        }
+        case 'status_bar': {
+          const { labels, data } = countByField(items, 'decision', STATUS_ORDER);
+          cfg = { type:'bar', data:{ labels, datasets:[{label:'จำนวน', data}] }, options:{responsive:true} };
+          note = 'แจกแจงจำนวนตามสถานะ';
+          break;
+        }
+        case 'room_bar': {
+          const { labels, data } = countByField(items, 'roomType');
+          cfg = { type:'bar', data:{ labels, datasets:[{label:'จำนวน', data}] }, options:{responsive:true} };
+          note = 'แจกแจงจำนวนตามประเภทห้อง';
+          break;
+        }
+        case 'avg_price_group': {
+          const field = (groupBy==='month') ? 'month' : groupBy;
+          const { labels, data } = avgByField(items, field, 'price');
+          cfg = { type:'bar', data:{ labels, datasets:[{label:'ราคาเฉลี่ย (บาท)', data}] }, options:{responsive:true} };
+          note = `ราคาเฉลี่ย แยกตาม ${labelOf(groupBy)}`;
+          break;
+        }
+        case 'avg_age_group': {
+          const field = (groupBy==='month') ? 'month' : groupBy;
+          const { labels, data } = avgByField(items, field, 'age');
+          cfg = { type:'bar', data:{ labels, datasets:[{label:'อายุเฉลี่ย (ปี)', data}] }, options:{responsive:true} };
+          note = `อายุเฉลี่ย แยกตาม ${labelOf(groupBy)}`;
+          break;
+        }
+        case 'rev_month_room': {
+          const { labels, datasets } = stackedMonthByField(items, 'roomType', 'sumPrice');
+          cfg = { type:'bar', data:{ labels, datasets }, options:{responsive:true, scales:{x:{stacked:true}, y:{stacked:true}}} };
+          note = 'รายได้รวมต่อเดือน แยกตามห้อง (Stacked)';
+          break;
+        }
+        case 'cust_month_status': {
+          const { labels, datasets } = stackedMonthByField(items, 'decision', 'count');
+          cfg = { type:'bar', data:{ labels, datasets }, options:{responsive:true, scales:{x:{stacked:true}, y:{stacked:true}}} };
+          note = 'จำนวนลูกค้าต่อเดือน แยกตามสถานะ (Stacked)';
+          break;
+        }
+        case 'funnel': {
+          const { labels, data } = countByField(items, 'decision', STATUS_ORDER);
+          const hasFunnel = !!Chart.registry?.controllers?.funnel;
+          if (hasFunnel) {
+            cfg = { type:'funnel', data:{ labels, datasets:[{ label:'Funnel', data }] }, options:{ responsive:true } };
+          } else {
+            cfg = { type:'bar', data:{ labels, datasets:[{ label:'Funnel (bar)', data }] }, options:{ indexAxis:'y', responsive:true } };
+            note = 'TIP: โหลด chartjs-chart-funnel แล้วรีเฟรชเพื่อใช้รูปทรงกรวยจริง';
+          }
+          note = (note||'') + ' • ลำดับตามกระบวนการสถานะ';
+          break;
+        }
+      }
+      renderChart(cfg);
+      $('chartNote').textContent = note;
+    }
+
+    /********** Filter + Render orchestration **********/
+    function applyFiltersAndRender() {
+      const fromISO = $('fromDate').value;
+      const toISO   = $('toDate').value;
+      filteredItems = (currentItems || []).filter(c => inRange(c.date, fromISO, toISO));
+      renderTable(filteredItems);
+      updateChart(filteredItems);
+    }
+
+    /********** Export **********/
+    function download(filename, blob) {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `monthly-${mYearSel.value||new Date().getFullYear()}.csv`;
+      a.download = filename;
       a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+    }
+    function toCSV(items) {
+      const headers = ['date','name','phone','gender','age','roomType','price','decision','disease','specialCare','id'];
+      const lines = [headers.join(',')];
+      items.forEach(c=>{
+        const row = headers.map(h=>{
+          let v = (c[h] ?? '');
+          if (typeof v === 'string') {
+            v = v.replace(/"/g,'""');
+            return `"${v}"`;
+          }
+          return v;
+        });
+        lines.push(row.join(','));
+      });
+      // add BOM ให้ Excel แสดงภาษาไทยถูกต้อง
+      return new Blob([new Uint8Array([0xEF,0xBB,0xBF]), lines.join('\n')], { type:'text/csv;charset=utf-8' });
+    }
+
+    $('btnCSV').addEventListener('click', () => {
+      const blob = toCSV(filteredItems);
+      download(`customers-${new Date().toISOString().slice(0,10)}.csv`, blob);
     });
-    mPrint.addEventListener('click', ()=>{
-      const months = buildMonthlyData();
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานรายเดือน</title>
-      <style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
-      h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
-      th{background:#f6f7f9}</style></head><body>
-      <h1>🗓️ รายงานรายเดือน (ปี ${mYearSel.value||new Date().getFullYear()})</h1>
-      <div>อิงตัวกรองจากหน้า “รายงาน” • พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
-      <table><thead><tr>
-        <th>เดือน</th><th>Leads</th><th>Won</th><th>Win Rate</th><th>Avg Price</th>
-      </tr></thead><tbody>
-        ${months.map(m=>`<tr>
-          <td>${m.key}</td><td>${m.total}</td><td>${m.won}</td>
-          <td>${m.total? (m.winRate.toFixed(1)+'%'):'0%'}</td>
-          <td>${fmtNum(m.avgPrice)}</td>
-        </tr>`).join('')}
-      </tbody></table></body></html>`;
-      const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
+    $('btnXLSX').addEventListener('click', () => {
+      // ใช้วิธีง่าย: สร้างไฟล์ CSV แต่ตั้งนามสกุล .xlsx — Excel เปิดได้
+      const blob = toCSV(filteredItems);
+      download(`customers-${new Date().toISOString().slice(0,10)}.xlsx`, blob);
     });
+
+    /********** Wiring **********/
+    $('btnApply').addEventListener('click', applyFiltersAndRender);
+    $('reportTopic').addEventListener('change', () => {
+      const t = $('reportTopic').value;
+      const needGroup = ['avg_price_group','avg_age_group'].includes(t);
+      $('groupBy').disabled = !needGroup; // ใช้เฉพาะหัวข้อ avg
+      updateChart(filteredItems);
+    });
+
+    // init default date range + first render
+    setDefaultRange();
+    // แสดงกราฟว่าง ๆ ก่อน
+    applyFiltersAndRender();
   </script>
 </body>
 </html>
