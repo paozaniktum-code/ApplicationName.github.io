@@ -6,8 +6,6 @@
   <title>หลังบ้าน — รายงาน/จัดการลูกค้า</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <!-- ปลั๊กอิน Funnel (ถ้าไม่อยากใช้ ให้ลบทิ้ง จะ fallback เป็นกราฟแท่งแนวนอนอัตโนมัติ) -->
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-funnel@4"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
     *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
@@ -46,7 +44,6 @@
         <nav class="flex gap-2">
           <button id="tabList" class="px-4 py-2 border-b-2 tab-active">📋 รายการ</button>
           <button id="tabReport" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">📈 รายงาน</button>
-          <button id="tabMonthly" class="px-4 py-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">🗓️ รายเดือน</button>
         </nav>
       </div>
 
@@ -90,22 +87,16 @@
         <div class="bg-white rounded-xl shadow p-5 mb-4">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-xl font-bold">รายงาน & ตัวกรอง</h2>
-            <div class="text-sm text-gray-600">ข้อมูลจาก Firestore: <b id="countAll">0</b> รายการ</div>
+            <div class="text-sm text-gray-600">ข้อมูลทั้งหมด: <b id="countAll">0</b> รายการ</div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div><label class="text-xs text-gray-500">วันที่เริ่ม</label><input id="fStart" type="date" class="w-full border rounded-lg px-3 py-2"></div>
             <div><label class="text-xs text-gray-500">วันที่สิ้นสุด</label><input id="fEnd" type="date" class="w-full border rounded-lg px-3 py-2"></div>
             <div><label class="text-xs text-gray-500">สถานะ</label><select id="fStatus" class="w-full border rounded-lg px-3 py-2">
               <option value="">ทั้งหมด</option>
-              <option>ใหม่</option>
-              <option>หาข้อมูลเปรียบเทียบ</option>
-              <option>ยังไม่ใช้บริการตอนนี้</option>
-              <option>รอตัดสินใจ</option>
-              <option>รอทางการแพทย์</option>
-              <option>รอดูสถานที่</option>
-              <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-              <option>ปิดการขายสำเร็จ</option>
-              <option>ยกเลิกการขาย</option>
+              <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+              <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+              <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
             </select></div>
             <div><label class="text-xs text-gray-500">ประเภทห้อง</label><select id="fRoom" class="w-full border rounded-lg px-3 py-2">
               <option value="">ทั้งหมด</option>
@@ -128,83 +119,33 @@
           </div>
         </div>
 
-        <!-- KPI -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ทั้งหมด</div><div class="text-2xl font-bold" id="kAll">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Leads ช่วงที่เลือก</div><div class="text-2xl font-bold" id="kPeriod">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">ปิดการขาย</div><div class="text-2xl font-bold" id="kWon">0</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Win Rate</div><div class="text-2xl font-bold" id="kWinRate">0%</div></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="text-xs text-gray-500">Avg. Price</div><div class="text-2xl font-bold" id="kAvgPrice">฿0</div></div>
-        </div>
-
-        <!-- Dynamic Chart Controls -->
-        <div class="bg-white rounded-xl shadow p-4 mb-4">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div class="font-semibold">แสดงผลกราฟแบบสลับหัวข้อ</div>
-            <div class="flex flex-wrap items-center gap-2">
-              <label class="text-sm text-gray-500">หัวข้อ:</label>
-              <select id="reportTopic" class="border rounded-lg px-3 py-2">
-                <option value="leads_time">Leads ต่อเดือน (เส้น)</option>
-                <option value="status_bar">จำนวนตามสถานะ (แท่ง)</option>
-                <option value="room_bar">จำนวนตามห้อง (แท่ง)</option>
-                <option value="avg_price_group">ราคาเฉลี่ย ตามกลุ่ม</option>
-                <option value="avg_age_group">อายุเฉลี่ย ตามกลุ่ม</option>
-                <option value="rev_month_room">รายได้ต่อเดือน (stacked ตามห้อง)</option>
-                <option value="cust_month_status">ลูกค้าต่อเดือน (stacked ตามสถานะ)</option>
-                <option value="funnel">Funnel (กรวย)</option>
-              </select>
-              <label class="text-sm text-gray-500">กลุ่ม:</label>
-              <select id="groupBy" class="border rounded-lg px-3 py-2">
-                <option value="status">สถานะ</option>
+        <!-- Query: เลือกมิติ + ค่า (จำนวน & Line) -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <div class="flex flex-col md:flex-row md:items-end md:gap-3 gap-2">
+            <div class="flex-1">
+              <label class="text-xs text-gray-500">หัวข้อ (มิติ)</label>
+              <select id="qField" class="w-full border rounded-lg px-3 py-2">
+                <option value="decision">สถานะ</option>
                 <option value="gender">เพศ</option>
                 <option value="roomType">ห้อง</option>
-                <option value="month">เดือน</option>
               </select>
             </div>
+            <div class="flex-1">
+              <label class="text-xs text-gray-500">ค่า (เลือกเฉพาะเจาะจง)</label>
+              <select id="qValue" class="w-full border rounded-lg px-3 py-2"></select>
+            </div>
+            <div>
+              <button id="qShow" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">แสดงผล</button>
+            </div>
+            <div class="ml-auto">
+              <div class="text-xs text-gray-500">จำนวนที่ตรงเงื่อนไข</div>
+              <div id="qCount" class="text-3xl font-extrabold text-slate-800 text-right">0</div>
+            </div>
           </div>
+
           <div class="mt-4">
-            <canvas id="chDynamic" height="120"></canvas>
-            <p id="chartNote" class="text-xs text-gray-500 mt-2"></p>
-          </div>
-        </div>
-
-        <!-- (เดิม) 3 กราฟพื้นฐาน — เก็บไว้ได้ เผื่ออยากเทียบ -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Leads Over Time</div><canvas id="chTime"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Status Breakdown</div><canvas id="chStatus"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Room Breakdown</div><canvas id="chRoom"></canvas></div>
-        </div>
-      </section>
-
-      <!-- ===== MONTHLY PAGE ===== -->
-      <section id="pageMonthly" class="hidden">
-        <div class="bg-white rounded-xl shadow p-5 mb-4">
-          <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold">รายงานรายเดือน</h2>
-            <select id="mYear" class="border rounded-lg px-3 py-2"></select>
-            <button id="mRefresh" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">อัปเดต</button>
-            <button id="mExport" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm">⬇️ Export</button>
-            <button id="mPrint" class="bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm">🖨️ พิมพ์</button>
-            <span class="ml-auto text-sm text-gray-600">เดือนที่มีข้อมูล: <b id="mCount">0</b></span>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Leads vs Won</div><canvas id="chMonth"></canvas></div>
-          <div class="bg-white rounded-xl shadow p-4"><div class="font-semibold mb-2">Win Rate (%)</div><canvas id="chMonthRate"></canvas></div>
-        </div>
-        <div class="bg-white rounded-xl shadow p-4">
-          <div class="font-semibold mb-2">ตารางสรุปรายเดือน</div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead><tr class="bg-gray-100">
-                <th class="p-2 text-left">เดือน (YYYY-MM)</th>
-                <th class="p-2 text-right">Leads</th>
-                <th class="p-2 text-right">Won</th>
-                <th class="p-2 text-right">Win Rate</th>
-                <th class="p-2 text-right">Avg Price</th>
-              </tr></thead>
-              <tbody id="tbMonthly"></tbody>
-            </table>
+            <canvas id="qChart" height="120"></canvas>
+            <p id="qNote" class="text-xs text-gray-500 mt-2"></p>
           </div>
         </div>
       </section>
@@ -217,15 +158,9 @@
       <div class="modal-card">
         <h3 class="text-lg font-bold mb-3">แก้ไขสถานะลูกค้า</h3>
         <select id="modalStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
-          <option>ใหม่</option>
-          <option>หาข้อมูลเปรียบเทียบ</option>
-          <option>ยังไม่ใช้บริการตอนนี้</option>
-          <option>รอตัดสินใจ</option>
-          <option>รอทางการแพทย์</option>
-          <option>รอดูสถานที่</option>
-          <option>ดูสถานที่แล้วรอตัดสินใจ</option>
-          <option>ปิดการขายสำเร็จ</option>
-          <option>ยกเลิกการขาย</option>
+          <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+          <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+          <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
         </select>
         <div class="flex gap-2">
           <button id="okBtn" class="flex-1 bg-blue-600 text-white rounded-lg py-2.5">บันทึก</button>
@@ -265,10 +200,8 @@
 
     const tabListBtn   = document.getElementById('tabList');
     const tabReportBtn = document.getElementById('tabReport');
-    const tabMonthlyBtn= document.getElementById('tabMonthly');
     const pageList     = document.getElementById('pageList');
     const pageReport   = document.getElementById('pageReport');
-    const pageMonthly  = document.getElementById('pageMonthly');
 
     // Filters
     const fStart = document.getElementById('fStart');
@@ -279,29 +212,16 @@
     const fMin   = document.getElementById('fMin');
     const fMax   = document.getElementById('fMax');
 
-    // KPI
-    const kAll = document.getElementById('kAll');
-    const kPeriod = document.getElementById('kPeriod');
-    const kWon = document.getElementById('kWon');
-    const kWinRate = document.getElementById('kWinRate');
-    const kAvgPrice = document.getElementById('kAvgPrice');
     const countAllEl = document.getElementById('countAll');
     const countFilteredEl = document.getElementById('countFiltered');
 
-    // Dynamic chart refs
-    const reportTopicSel = document.getElementById('reportTopic');
-    const groupBySel     = document.getElementById('groupBy');
-    const chartNoteEl    = document.getElementById('chartNote');
-
-    // Charts
-    let chTime, chStatus, chRoom, chMonth, chMonthRate, chDynamic;
-
-    // Monthly
-    const mYearSel = document.getElementById('mYear');
-    const mRefresh = document.getElementById('mRefresh');
-    const mExport  = document.getElementById('mExport');
-    const mPrint   = document.getElementById('mPrint');
-    const mCount   = document.getElementById('mCount');
+    // Query controls
+    const qFieldSel = document.getElementById('qField');
+    const qValueSel = document.getElementById('qValue');
+    const qShowBtn  = document.getElementById('qShow');
+    const qCountEl  = document.getElementById('qCount');
+    const qNoteEl   = document.getElementById('qNote');
+    let qChart;
 
     // ---- Utils ----
     const fmtTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
@@ -312,15 +232,6 @@
       if (c.date){ const d = new Date(c.date + 'T00:00:00'); if (!isNaN(d)) return d; }
       return null;
     }
-    function getClosedDate(c){
-      if (c.closedAt && typeof c.closedAt.toDate === 'function') return c.closedAt.toDate();
-      return null;
-    }
-    const STATUS_ORDER = [
-      'ใหม่','หาข้อมูลเปรียบเทียบ','ยังไม่ใช้บริการตอนนี้','รอดูสถานที่',
-      'ดูสถานที่แล้วรอตัดสินใจ','รอตัดสินใจ','รอทางการแพทย์','ปิดการขายสำเร็จ','ยกเลิกการขาย'
-    ];
-    const labelOf = (g)=>({status:'สถานะ',gender:'เพศ',roomType:'ห้อง',month:'เดือน'}[g]||g);
 
     // ---- Auth: submit ----
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
@@ -393,13 +304,10 @@
       };
       activate(tabListBtn, pageList, tab==='list');
       activate(tabReportBtn, pageReport, tab==='report');
-      activate(tabMonthlyBtn, pageMonthly, tab==='monthly');
-      if (tab==='report') renderReports();
-      if (tab==='monthly') renderMonthly();
+      if (tab==='report') renderReportPage();
     }
     tabListBtn.addEventListener('click', ()=>setTab('list'));
     tabReportBtn.addEventListener('click', ()=>setTab('report'));
-    tabMonthlyBtn.addEventListener('click', ()=>setTab('monthly'));
 
     // ---- Data ----
     let currentItems = [];
@@ -469,58 +377,7 @@
       document.body.appendChild(modal);
     };
 
-    // ---- Export / Print (list) ----
-    document.getElementById('exportCsvBtn').addEventListener('click', ()=> exportCsv(currentItems));
-    document.getElementById('printBtn').addEventListener('click', ()=> printItems(currentItems, "รายงานลูกค้า (ทั้งหมด)"));
-
-    const csvEscape=(s)=>(s??'').toString().replace(/\r?\n/g,' ').trim();
-    const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
-
-    function exportCsv(items){
-      if (!items.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
-      const header = ['ลำดับ','วันที่','ชื่อ','เบอร์','เพศ','อายุ','ห้อง','ราคา','สถานะ','closedAt'];
-      const rows = items.map((c,i)=>[
-        (i+1), fmtTH(c.date), csvEscape(c.name), csvEscape(c.phone),
-        c.gender, c.age, csvEscape(c.roomType),
-        c.price, csvEscape(c.decision||''),
-        (getClosedDate(c)? getClosedDate(c).toISOString() : '')
-      ]);
-      const csv = [header, ...rows].map(r=>r.map(toCsvCell).join(',')).join('\n');
-      const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    }
-
-    function printItems(items, title="รายงานลูกค้า"){
-      if (!items.length) return alert('ไม่มีข้อมูลลูกค้าให้พิมพ์');
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${title}</title>
-      <style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
-      h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
-      th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
-      th{background:#f6f7f9}</style></head><body>
-      <h1>📋 ${title}</h1>
-      <div>พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
-      <table><thead><tr>
-        <th>#</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>เพศ/อายุ</th><th>ห้อง</th><th>ราคา</th><th>สถานะ</th><th>closedAt</th>
-      </tr></thead><tbody>
-        ${items.map((c,i)=>`<tr>
-          <td>${i+1}</td>
-          <td>${fmtTH(c.date)}</td>
-          <td>${escapeHtml(c.name)}</td>
-          <td>${escapeHtml(c.phone)}</td>
-          <td>${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
-          <td>${escapeHtml(c.roomType)}</td>
-          <td>${fmtNum(c.price)}</td>
-          <td>${escapeHtml(c.decision||'-')}</td>
-          <td>${(getClosedDate(c)? escapeHtml(getClosedDate(c).toLocaleString('th-TH')) : '-')}</td>
-        </tr>`).join('')}
-      </tbody></table></body></html>`;
-      const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
-    }
-
-    // ---- Reports ----
+    // ---- Filters & Report ----
     function ensureDefaultDateRange(){
       if (!fStart.value || !fEnd.value){
         const today = new Date();
@@ -552,321 +409,125 @@
       });
 
       countFilteredEl.textContent = filteredItems.length;
-      kAll.textContent = currentItems.length;
-      kPeriod.textContent = filteredItems.length;
-
-      const wonItems = filteredItems.filter(c=> (c.decision||'') === 'ปิดการขายสำเร็จ');
-      kWon.textContent = wonItems.length;
-      kWinRate.textContent = filteredItems.length ? ((wonItems.length/filteredItems.length*100).toFixed(1)+'%') : '0%';
-
-      const avgPrice = filteredItems.length ? Math.round(filteredItems.reduce((a,c)=>a+Number(c.price||0),0)/filteredItems.length) : 0;
-      kAvgPrice.textContent = '฿' + fmtNum(avgPrice);
-
-      renderBasicCharts(filteredItems);
-      updateDynamicChart(filteredItems);
+      // อัปเดตรายการค่าของ qValue ให้สอดคล้องกับมิติและข้อมูลที่ถูกกรอง
+      populateQueryValues();
+      // อัปเดตผล query ปัจจุบัน (ถ้ามี)
+      drawQuery();
     }
-
-    function renderReports(){ applyFilters(); }
 
     document.getElementById('btnApply').addEventListener('click', applyFilters);
     document.getElementById('btnReset').addEventListener('click', ()=>{
       fStatus.value=''; fRoom.value=''; fGender.value=''; fMin.value=''; fMax.value='';
       ensureDefaultDateRange(); applyFilters();
     });
+
+    // Export/Print (filtered or all)
     document.getElementById('btnExportFiltered').addEventListener('click', ()=> exportCsv(filteredItems));
     document.getElementById('btnPrintFiltered').addEventListener('click', ()=> printItems(filteredItems, 'รายงานลูกค้า (Filtered)'));
+    document.getElementById('exportCsvBtn').addEventListener('click', ()=> exportCsv(currentItems));
+    document.getElementById('printBtn').addEventListener('click', ()=> printItems(currentItems, "รายงานลูกค้า (ทั้งหมด)"));
 
-    function renderBasicCharts(items){
-      [chTime, chStatus, chRoom].forEach(c=> c && c.destroy());
-
-      // by day
-      const byDay = new Map();
-      items.forEach(c=>{
-        const dt = getDateFromDoc(c); if (!dt) return;
-        const key = dt.toISOString().slice(0,10);
-        byDay.set(key, (byDay.get(key)||0)+1);
-      });
-      const labelsTime = Array.from(byDay.keys()).sort();
-      const dataTime = labelsTime.map(k=>byDay.get(k));
-      chTime = new Chart(document.getElementById('chTime'), {
-        type: 'line',
-        data: { labels: labelsTime, datasets: [{ label: 'Leads', data: dataTime, tension:.3 }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      // status
-      const mStatus = new Map();
-      items.forEach(c=>{ const k=c.decision||'-'; mStatus.set(k,(mStatus.get(k)||0)+1); });
-      const labelsStatus = Array.from(mStatus.keys());
-      const dataStatus = labelsStatus.map(k=>mStatus.get(k));
-      chStatus = new Chart(document.getElementById('chStatus'), {
-        type: 'doughnut',
-        data: { labels: labelsStatus, datasets: [{ data: dataStatus }] },
-        options: { responsive: true, maintainAspectRatio: false }
-      });
-
-      // room
-      const mRoom = new Map();
-      items.forEach(c=>{ const k=c.roomType||'-'; mRoom.set(k,(mRoom.get(k)||0)+1); });
-      const labelsRoom = Array.from(mRoom.keys());
-      const dataRoom = labelsRoom.map(k=>mRoom.get(k));
-      chRoom = new Chart(document.getElementById('chRoom'), {
-        type: 'bar',
-        data: { labels: labelsRoom, datasets: [{ label: 'จำนวน', data: dataRoom }] },
-        options: { responsive: true, maintainAspectRatio: false, scales:{ y:{ beginAtZero:true } } }
-      });
-    }
-
-    // ===== Dynamic Chart (หัวข้อสลับได้) =====
-    function countByMonth(items) {
-      const map = {};
-      items.forEach(c => {
-        const d = getDateFromDoc(c); if (!d) return;
-        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        map[key] = (map[key]||0)+1;
-      });
-      const labels = Object.keys(map).sort();
-      return { labels, data: labels.map(l => map[l]) };
-    }
-    function countByField(items, field, orderLabels) {
-      const m = {};
-      items.forEach(c => {
-        const k = (field==='month')
-          ? (()=>{ const d=getDateFromDoc(c); return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`:'ไม่ทราบเดือน'; })()
-          : (c[field] || 'ไม่ระบุ');
-        m[k]=(m[k]||0)+1;
-      });
-      let labels = Object.keys(m);
-      if (orderLabels) labels = orderLabels.filter(k => k in m).concat(labels.filter(k=>!orderLabels.includes(k)));
-      return { labels, data: labels.map(l => m[l] || 0) };
-    }
-    function avgByField(items, field, valueField) {
-      const sum = {}, cnt = {};
-      items.forEach(c => {
-        const k = (field==='month')
-          ? (()=>{ const d=getDateFromDoc(c); return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`:'ไม่ทราบเดือน'; })()
-          : (c[field] || 'ไม่ระบุ');
-        const v = Number(c[valueField] || 0); if (!Number.isFinite(v)) return;
-        sum[k]=(sum[k]||0)+v; cnt[k]=(cnt[k]||0)+1;
-      });
-      const labels = Object.keys(sum).sort();
-      const data = labels.map(l => sum[l]/(cnt[l]||1));
-      return { labels, data };
-    }
-    function stackedMonthByField(items, stackField, valueMode='count') {
-      const months = new Set(), cats = new Set(), map = {};
-      items.forEach(c => {
-        const d = getDateFromDoc(c); if (!d) return;
-        const m = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-        const cat = c[stackField] || 'ไม่ระบุ';
-        months.add(m); cats.add(cat);
-        map[cat] = map[cat] || {};
-        map[cat][m] = (map[cat][m]||0) + (valueMode==='sumPrice' ? Number(c.price||0) : 1);
-      });
-      const labels = Array.from(months).sort();
-      const categories = Array.from(cats);
-      const datasets = categories.map(cat => ({ label: cat, data: labels.map(m=>map[cat]?.[m]||0), stack:'s1' }));
-      return { labels, datasets };
-    }
-
-    function updateDynamicChart(items){
-      const topic  = reportTopicSel.value;
-      const groupBy= groupBySel.value;
-
-      // เปิด/ปิดตัวเลือก groupBy เฉพาะหัวข้อ avg
-      const needGroup = ['avg_price_group','avg_age_group'].includes(topic);
-      groupBySel.disabled = !needGroup;
-
-      // destroy chart เก่า
-      if (chDynamic) chDynamic.destroy();
-
-      if (!items.length){
-        chDynamic = new Chart(document.getElementById('chDynamic'), {
-          type:'bar', data:{ labels:['ไม่มีข้อมูล'], datasets:[{label:'', data:[0]}] }
-        });
-        chartNoteEl.textContent = 'ไม่พบข้อมูลในช่วงที่เลือก';
-        return;
-      }
-
-      let cfg, note='';
-      switch(topic){
-        case 'leads_time': {
-          const { labels, data } = countByMonth(items);
-          cfg = { type:'line', data:{ labels, datasets:[{ label:'Leads', data, tension:.3 }] } };
-          note = 'จำนวน Leads ต่อเดือน';
-          break;
-        }
-        case 'status_bar': {
-          const { labels, data } = countByField(items, 'decision', STATUS_ORDER);
-          cfg = { type:'bar', data:{ labels, datasets:[{ label:'จำนวน', data }] } };
-          note = 'แจกแจงจำนวนตามสถานะ';
-          break;
-        }
-        case 'room_bar': {
-          const { labels, data } = countByField(items, 'roomType');
-          cfg = { type:'bar', data:{ labels, datasets:[{ label:'จำนวน', data }] } };
-          note = 'แจกแจงจำนวนตามประเภทห้อง';
-          break;
-        }
-        case 'avg_price_group': {
-          const field = groupBy==='month' ? 'month' : groupBy;
-          const { labels, data } = avgByField(items, field, 'price');
-          cfg = { type:'bar', data:{ labels, datasets:[{ label:'ราคาเฉลี่ย (บาท)', data }] } };
-          note = `ราคาเฉลี่ย แยกตาม ${labelOf(groupBy)}`;
-          break;
-        }
-        case 'avg_age_group': {
-          const field = groupBy==='month' ? 'month' : groupBy;
-          const { labels, data } = avgByField(items, field, 'age');
-          cfg = { type:'bar', data:{ labels, datasets:[{ label:'อายุเฉลี่ย (ปี)', data }] } };
-          note = `อายุเฉลี่ย แยกตาม ${labelOf(groupBy)}`;
-          break;
-        }
-        case 'rev_month_room': {
-          const { labels, datasets } = stackedMonthByField(items, 'roomType', 'sumPrice');
-          cfg = { type:'bar', data:{ labels, datasets }, options:{ scales:{ x:{stacked:true}, y:{stacked:true} } } };
-          note = 'รายได้รวมต่อเดือน แยกตามห้อง (Stacked)';
-          break;
-        }
-        case 'cust_month_status': {
-          const { labels, datasets } = stackedMonthByField(items, 'decision', 'count');
-          cfg = { type:'bar', data:{ labels, datasets }, options:{ scales:{ x:{stacked:true}, y:{stacked:true} } } };
-          note = 'จำนวนลูกค้าต่อเดือน แยกตามสถานะ (Stacked)';
-          break;
-        }
-        case 'funnel': {
-          const { labels, data } = countByField(items, 'decision', STATUS_ORDER);
-          const hasFunnel = !!Chart.registry?.controllers?.funnel;
-          if (hasFunnel) {
-            cfg = { type:'funnel', data:{ labels, datasets:[{ label:'Funnel', data }] } };
-            note = 'Funnel ตามลำดับสถานะ';
-          } else {
-            cfg = { type:'bar', data:{ labels, datasets:[{ label:'Funnel (bar)', data }] }, options:{ indexAxis:'y' } };
-            note = 'ไม่ได้โหลดปลั๊กอิน funnel — แสดงแท่งแนวนอนแทน';
-          }
-          break;
-        }
-      }
-      chDynamic = new Chart(document.getElementById('chDynamic'), cfg);
-      chartNoteEl.textContent = note;
-    }
-
-    reportTopicSel.addEventListener('change', ()=> updateDynamicChart(filteredItems));
-    groupBySel.addEventListener('change',  ()=> updateDynamicChart(filteredItems));
-
-    // ---- Monthly ----
-    function yearFromDate(d){ return d.getFullYear(); }
-    function ymKey(d){ return d.toISOString().slice(0,7); }
-
-    function getAllYearsFromData(items){
-      const s = new Set();
-      items.forEach(c=>{ const dt=getDateFromDoc(c); if (dt) s.add(yearFromDate(dt)); });
-      const arr = Array.from(s).sort();
-      return arr.length ? arr : [new Date().getFullYear()];
-    }
-
-    function ensureMonthlyYearOptions(){
-      const years = getAllYearsFromData(currentItems);
-      mYearSel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
-      if (!mYearSel.value && years.length){ mYearSel.value = years[years.length-1]; }
-    }
-
-    function buildMonthlyData(){
-      const year = Number(mYearSel.value || new Date().getFullYear());
-      const byMonth = {};
-      filteredItems.forEach(c=>{
-        const dt = getDateFromDoc(c); if (!dt || yearFromDate(dt)!==year) return;
-        const key = ymKey(dt);
-        byMonth[key] ||= { total:0, won:0, sumPrice:0 };
-        byMonth[key].total++;
-        byMonth[key].sumPrice += Number(c.price||0);
-        if ((c.decision||'')==='ปิดการขายสำเร็จ'){ byMonth[key].won++; }
-      });
-      const months = [...Array(12)].map((_,i)=>{
-        const m = String(i+1).padStart(2,'0');
-        const key = `${year}-${m}`;
-        const v = byMonth[key] || { total:0, won:0, sumPrice:0 };
-        const avgPrice = v.total ? Math.round(v.sumPrice / v.total) : 0;
-        const winRate = v.total ? (v.won / v.total * 100) : 0;
-        return { key, ...v, avgPrice, winRate };
-      });
-      return months;
-    }
-
-    function renderMonthly(){
-      ensureMonthlyYearOptions();
-      applyFilters(); // ใช้ตัวกรองเดียวกับหน้า Report
-
-      const months = buildMonthlyData();
-      const labels = months.map(x=>x.key);
-      const totals = months.map(x=>x.total);
-      const wons   = months.map(x=>x.won);
-      const rates  = months.map(x=> Math.round(x.winRate*10)/10 );
-      mCount.textContent = months.filter(x=>x.total>0).length;
-
-      chMonth && chMonth.destroy();
-      chMonth = new Chart(document.getElementById('chMonth'), {
-        type: 'bar',
-        data: { labels, datasets: [
-          { label: 'Leads', data: totals },
-          { label: 'Won',   data: wons }
-        ]},
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
-      });
-
-      chMonthRate && chMonthRate.destroy();
-      chMonthRate = new Chart(document.getElementById('chMonthRate'), {
-        type: 'line',
-        data: { labels, datasets: [{ label:'Win Rate (%)', data: rates, tension:.3 }] },
-        options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, max:100 } } }
-      });
-
-      const tb = document.getElementById('tbMonthly');
-      tb.innerHTML = months.map(m=>`
-        <tr class="border-t">
-          <td class="p-2">${m.key}</td>
-          <td class="p-2 text-right">${m.total}</td>
-          <td class="p-2 text-right">${m.won}</td>
-          <td class="p-2 text-right">${m.total? (m.winRate.toFixed(1)+'%') : '0%'}</td>
-          <td class="p-2 text-right">฿${fmtNum(m.avgPrice)}</td>
-        </tr>
-      `).join('');
-    }
-
-    mRefresh.addEventListener('click', renderMonthly);
-    mYearSel.addEventListener('change', renderMonthly);
-    mExport.addEventListener('click', ()=>{
-      const months = buildMonthlyData();
-      const header = ['เดือน(YYYY-MM)','Leads','Won','WinRate(%)','AvgPrice'];
-      const rows = months.map(m=>[ m.key, m.total, m.won, (m.total? m.winRate.toFixed(1) : '0'), m.avgPrice ]);
-      const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+    // CSV/Print helpers
+    const csvEscape=(s)=>(s??'').toString().replace(/\r?\n/g,' ').trim();
+    const toCsvCell=(v)=>{ const s=(v??'').toString(); return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s; };
+    function exportCsv(items){
+      if (!items.length) return alert('ไม่มีข้อมูลสำหรับส่งออก');
+      const header = ['ลำดับ','วันที่','ชื่อ','เบอร์','เพศ','อายุ','ห้อง','ราคา','สถานะ'];
+      const rows = items.map((c,i)=>[
+        (i+1), fmtTH(c.date), csvEscape(c.name), csvEscape(c.phone),
+        c.gender, c.age, csvEscape(c.roomType),
+        c.price, csvEscape(c.decision||'')
+      ]);
       const csv = [header, ...rows].map(r=>r.map(toCsvCell).join(',')).join('\n');
       const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `monthly-${mYearSel.value||new Date().getFullYear()}.csv`;
+      a.download = `customers-${new Date().toISOString().slice(0,10)}.csv`;
       a.click();
-    });
-    mPrint.addEventListener('click', ()=>{
-      const months = buildMonthlyData();
-      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>รายงานรายเดือน</title>
+    }
+    function printItems(items, title="รายงานลูกค้า"){
+      if (!items.length) return alert('ไม่มีข้อมูลลูกค้าให้พิมพ์');
+      const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>${title}</title>
       <style>body{font-family:'Sarabun',sans-serif;margin:20px;color:#333}
       h1{margin:0 0 8px;font-size:20px} table{width:100%;border-collapse:collapse;margin-top:12px}
       th,td{border:1px solid #ddd;padding:6px 8px;font-size:12px;text-align:left}
       th{background:#f6f7f9}</style></head><body>
-      <h1>🗓️ รายงานรายเดือน (ปี ${mYearSel.value||new Date().getFullYear()})</h1>
-      <div>อิงตัวกรองจากหน้า “รายงาน” • พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
+      <h1>📋 ${title}</h1>
+      <div>พิมพ์เมื่อ: ${new Date().toLocaleString('th-TH')}</div>
       <table><thead><tr>
-        <th>เดือน</th><th>Leads</th><th>Won</th><th>Win Rate</th><th>Avg Price</th>
+        <th>#</th><th>วันที่</th><th>ชื่อ</th><th>เบอร์</th><th>เพศ/อายุ</th><th>ห้อง</th><th>ราคา</th><th>สถานะ</th>
       </tr></thead><tbody>
-        ${months.map(m=>`<tr>
-          <td>${m.key}</td><td>${m.total}</td><td>${m.won}</td>
-          <td>${m.total? (m.winRate.toFixed(1)+'%'):'0%'}</td>
-          <td>${fmtNum(m.avgPrice)}</td>
+        ${items.map((c,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${fmtTH(c.date)}</td>
+          <td>${escapeHtml(c.name)}</td>
+          <td>${escapeHtml(c.phone)}</td>
+          <td>${escapeHtml(c.gender)} / ${escapeHtml(c.age)}</td>
+          <td>${escapeHtml(c.roomType)}</td>
+          <td>${fmtNum(c.price)}</td>
+          <td>${escapeHtml(c.decision||'-')}</td>
         </tr>`).join('')}
       </tbody></table></body></html>`;
       const w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.onload = ()=> w.print();
-    });
+    }
+
+    // ===== Query UI =====
+    function uniqueValues(items, field){
+      const s = new Set();
+      items.forEach(c => s.add(c[field] || 'ไม่ระบุ'));
+      return Array.from(s).sort();
+    }
+    function populateQueryValues(){
+      const field = qFieldSel.value;
+      const values = uniqueValues(filteredItems, field);
+      qValueSel.innerHTML = values.map(v=>`<option value="${v}">${v}</option>`).join('');
+    }
+    qFieldSel.addEventListener('change', populateQueryValues);
+
+    function buildDailySeries(items, predicate){
+      const m = new Map();
+      items.forEach(c=>{
+        if (!predicate(c)) return;
+        const d = getDateFromDoc(c); if (!d) return;
+        const key = d.toISOString().slice(0,10);
+        m.set(key, (m.get(key)||0)+1);
+      });
+      const labels = Array.from(m.keys()).sort();
+      const data = labels.map(k=>m.get(k));
+      return { labels, data };
+    }
+
+    function drawQuery(){
+      if (!filteredItems.length){
+        qCountEl.textContent = 0;
+        if (qChart) qChart.destroy();
+        qChart = new Chart(document.getElementById('qChart'), { type:'line', data:{labels:['-'], datasets:[{label:'ไม่มีข้อมูล', data:[0]}]} });
+        qNoteEl.textContent = 'ไม่พบข้อมูลในช่วงที่กรอง';
+        return;
+      }
+      const field = qFieldSel.value;
+      const value = qValueSel.value;
+      const pred = (c)=> ( (c[field]||'ไม่ระบุ') === value );
+
+      const total = filteredItems.filter(pred).length;
+      qCountEl.textContent = total;
+
+      const { labels, data } = buildDailySeries(filteredItems, pred);
+      if (qChart) qChart.destroy();
+      qChart = new Chart(document.getElementById('qChart'), {
+        type:'line',
+        data:{ labels, datasets:[{ label:`${field} = ${value}`, data, tension:.3 }] },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+      });
+      qNoteEl.textContent = `กราฟเส้น: จำนวนต่อวันของ "${value}" ในมิติ "${field}" (อิงข้อมูลหลังกรอง)`;
+    }
+
+    qShowBtn.addEventListener('click', drawQuery);
+
+    function renderReportPage(){
+      populateQueryValues();
+      drawQuery();
+    }
   </script>
 </body>
 </html>
