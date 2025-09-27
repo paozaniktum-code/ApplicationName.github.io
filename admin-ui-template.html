@@ -1,166 +1,426 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AppzStory Admin — Template (Light Blue)</title>
+  <title>หลังบ้าน — ลูกค้า (Light Blue UI)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap');
     *{box-sizing:border-box} body{font-family:'Sarabun',sans-serif}
-    /* หิมะโทนฟ้าอ่อน */
+    /* โทนฟ้าอ่อน + แบ็คกราวด์หิมะเบา ๆ */
     .snow:before,.snow:after{
       content:""; position:fixed; inset:0; pointer-events:none;
       background-image:
         radial-gradient(rgba(56,189,248,.9) 1px, transparent 2px),
         radial-gradient(rgba(125,211,252,.9) 1px, transparent 2px);
-      background-size: 6px 6px, 8px 8px;
-      background-position: 0 0, 50px 50px; opacity:.18; animation: drift 32s linear infinite;
+      background-size:6px 6px, 8px 8px;
+      background-position:0 0, 50px 50px; opacity:.14; animation: drift 36s linear infinite;
     }
-    .snow:after{ animation-duration: 48s; opacity:.12; }
-    @keyframes drift{ from{ transform:translateY(-12px) } to{ transform:translateY(12px) } }
-    ::-webkit-scrollbar{ height:8px; width:8px } 
-    ::-webkit-scrollbar-thumb{ background:#cfe8fb; border-radius:999px }
+    .snow:after{ animation-duration:52s; opacity:.10 }
+    @keyframes drift{ from{transform:translateY(-14px)} to{transform:translateY(14px)} }
+    ::-webkit-scrollbar{height:8px;width:8px}
+    ::-webkit-scrollbar-thumb{background:#cfe8fb;border-radius:999px}
+    .tab-on{color:#0ea5e9;border-color:#0ea5e9}
   </style>
 </head>
 <body class="bg-sky-50 snow text-slate-800">
-  <!-- Topbar -->
-  <header class="fixed inset-x-0 top-0 h-14 bg-white/90 backdrop-blur border-b border-sky-100 z-40">
-    <div class="h-full flex items-center justify-between px-4">
-      <div class="flex items-center gap-3">
-        <button id="btnMenu" class="md:hidden p-2 rounded hover:bg-sky-50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-sky-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-        </button>
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-sky-500 text-white grid place-items-center font-bold shadow-sm">A</div>
-          <span class="font-bold text-sky-800">AppzStory Admin</span>
-        </div>
+  <!-- ========== LOGIN ========== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+    <form id="loginForm" class="bg-white/95 w-full max-w-sm p-6 rounded-2xl shadow border border-sky-100">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-9 h-9 rounded-full bg-sky-500 text-white grid place-items-center font-bold shadow-sm">A</div>
+        <h1 class="text-lg font-bold text-sky-800">เข้าสู่ระบบหลังบ้าน</h1>
       </div>
-      <div class="text-xs sm:text-sm text-sky-600">เข้าสู่ระบบครั้งล่าสุด: 2021-06-01 20:00:00</div>
-    </div>
-  </header>
-
-  <div class="pt-14 flex">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="fixed md:static z-30 inset-y-14 left-0 w-64 bg-sky-700 text-white transition-transform -translate-x-full md:translate-x-0">
-      <div class="h-full flex flex-col">
-        <div class="px-4 py-3 border-b border-sky-600 flex items-center gap-3 bg-sky-700/95">
-          <div class="w-8 h-8 rounded-full bg-white/15 grid place-items-center">👤</div>
-          <div>
-            <div class="text-sm font-semibold">ผู้ใช้ทดสอบ</div>
-            <div class="text-[11px] text-sky-200">ผู้ดูแลระบบ</div>
-          </div>
-        </div>
-        <nav class="px-2 py-3 space-y-1 text-sm">
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🏠 หน้าหลัก</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded bg-white/15" href="#">👥 ผู้ดูแลระบบ</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">📄 รายชื่อลูกค้า</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🛒 รายการสินค้า</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🧾 รายการสั่งซื้อ</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">👛 บัญชีของเรา</a>
-          <a class="flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10" href="#">🚪 ออกจากระบบ</a>
-        </nav>
-        <div class="mt-auto px-4 py-3 text-[11px] text-sky-200/80">Copyright © 2021–2025 appzstory.dev</div>
-      </div>
-    </aside>
-
-    <!-- Content -->
-    <main class="flex-1 md:ml-0 w-full md:ml-64">
-      <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
-        <div class="bg-white rounded-xl shadow-sm border border-sky-100">
-          <div class="px-5 py-4 border-b border-sky-100 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">👥</span>
-              <h2 class="font-bold text-sky-900">ผู้ดูแลระบบ</h2>
-            </div>
-            <button class="bg-sky-600 hover:bg-sky-700 text-white text-sm px-3 py-2 rounded-lg shadow-sm">+ เพิ่มข้อมูล</button>
-          </div>
-
-          <!-- Controls -->
-          <div class="px-5 py-4 flex items-center gap-3 flex-wrap text-sm">
-            <label class="flex items-center gap-2">แสดงข้อมูล
-              <select class="border border-sky-200 rounded px-2 py-1 text-sky-800 bg-white">
-                <option>10</option><option>25</option><option>50</option>
-              </select> แถว
-            </label>
-            <div class="ml-auto flex items-center gap-2">
-              <span class="text-sky-700">ค้นหา</span>
-              <input type="search" class="border border-sky-200 rounded px-3 py-1.5 w-60 focus:outline-none focus:ring-2 focus:ring-sky-300" placeholder="พิมพ์เพื่อค้นหา…">
-            </div>
-          </div>
-
-          <!-- Table -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="bg-sky-50 text-sky-900">
-                  <th class="px-4 py-2 text-left">ลำดับ</th>
-                  <th class="px-4 py-2 text-left">ชื่อผู้ใช้งาน</th>
-                  <th class="px-4 py-2 text-left">ชื่อจริง</th>
-                  <th class="px-4 py-2 text-left">นามสกุล</th>
-                  <th class="px-4 py-2 text-left">อีเมล</th>
-                  <th class="px-4 py-2 text-left">ใช้งานล่าสุด</th>
-                  <th class="px-4 py-2 text-left">สิทธิ์ที่ใช้งาน</th>
-                  <th class="px-4 py-2 text-left">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-sky-100">
-                <tr class="hover:bg-sky-50/70">
-                  <td class="px-4 py-2">1</td>
-                  <td class="px-4 py-2">admin</td>
-                  <td class="px-4 py-2">Yothin</td>
-                  <td class="px-4 py-2">Sapsamran</td>
-                  <td class="px-4 py-2">yothin@gmail.com</td>
-                  <td class="px-4 py-2">2020-10-01 20:50:40</td>
-                  <td class="px-4 py-2">
-                    <span class="inline-flex items-center text-[11px] px-2 py-1 rounded bg-sky-100 text-sky-700 border border-sky-200">superadmin</span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button class="text-xs bg-amber-400 hover:bg-amber-500 text-white px-3 py-1 rounded mr-2">แก้ไข</button>
-                    <button class="text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1 rounded">ลบ</button>
-                  </td>
-                </tr>
-                <tr class="hover:bg-sky-50/70">
-                  <td class="px-4 py-2">2</td>
-                  <td class="px-4 py-2">admin2</td>
-                  <td class="px-4 py-2">AppzStory</td>
-                  <td class="px-4 py-2">Sapsamran</td>
-                  <td class="px-4 py-2">appzstory@gmail.com</td>
-                  <td class="px-4 py-2">2020-10-01 20:50:40</td>
-                  <td class="px-4 py-2">
-                    <span class="inline-flex items-center text-[11px] px-2 py-1 rounded bg-teal-50 text-teal-700 border border-teal-200">admin</span>
-                  </td>
-                  <td class="px-4 py-2">
-                    <button class="text-xs bg-amber-400 hover:bg-amber-500 text-white px-3 py-1 rounded mr-2">แก้ไข</button>
-                    <button class="text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1 rounded">ลบ</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Footer -->
-          <div class="px-5 py-4 flex items-center justify-between text-sm text-sky-700">
-            <div>แสดงหน้า 1 จาก 1</div>
-            <div class="flex items-center gap-2">
-              <button class="border border-sky-200 px-2 py-1 rounded hover:bg-sky-50">Previous</button>
-              <button class="border border-sky-200 px-2 py-1 rounded bg-sky-600 text-white">1</button>
-              <button class="border border-sky-200 px-2 py-1 rounded hover:bg-sky-50">Next</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
+      <input id="email" type="email" placeholder="อีเมล" class="border rounded-lg w-full px-3 py-2 mb-2 focus:ring-2 focus:ring-sky-300" required />
+      <input id="password" type="password" placeholder="รหัสผ่าน" class="border rounded-lg w-full px-3 py-2 mb-3 focus:ring-2 focus:ring-sky-300" required />
+      <button class="w-full bg-sky-600 hover:bg-sky-700 text-white rounded-lg py-2.5">เข้าสู่ระบบ</button>
+      <p id="loginError" class="text-red-600 text-sm mt-2 hidden"></p>
+      <p class="text-xs text-slate-500 mt-3">* ต้องถูกกำหนด role ใน <code>roles/{uid}.role</code> เป็น <b>admin</b> หรือ <b>staff</b></p>
+    </form>
   </div>
 
-  <script>
-    // toggle sidebar (มือถือ)
-    const btn = document.getElementById('btnMenu');
-    const sb  = document.getElementById('sidebar');
-    btn?.addEventListener('click', ()=>{
-      const hidden = sb.classList.contains('-translate-x-full');
-      sb.classList.toggle('-translate-x-full', !hidden);
+  <!-- ========== DASHBOARD ========== -->
+  <div id="dashboard" class="hidden">
+    <!-- Topbar -->
+    <header class="fixed inset-x-0 top-0 h-14 bg-white/90 backdrop-blur border-b border-sky-100 z-40">
+      <div class="h-full flex items-center justify-between px-4">
+        <div class="flex items-center gap-3">
+          <button id="btnMenu" class="md:hidden p-2 rounded hover:bg-sky-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-sky-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-sky-500 text-white grid place-items-center font-bold shadow-sm">A</div>
+            <span class="font-bold text-sky-800">App Admin</span>
+          </div>
+          <nav class="ml-6 hidden md:flex gap-2 text-sm">
+            <button id="tabList"   class="px-3 py-2 border-b-2 border-transparent hover:text-sky-700">📋 รายการ</button>
+            <button id="tabReport" class="px-3 py-2 border-b-2 border-transparent hover:text-sky-700">🔎 ค้นหา/สรุป</button>
+          </nav>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="userBadge" class="text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-3 py-1">-</span>
+          <button id="logoutBtn" class="text-xs bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg">ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="pt-14 flex">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="fixed md:static z-30 inset-y-14 left-0 w-64 bg-sky-700 text-white transition-transform -translate-x-full md:translate-x-0">
+        <div class="h-full flex flex-col">
+          <div class="px-4 py-3 border-b border-sky-600 flex items-center gap-3 bg-sky-700/95">
+            <div class="w-8 h-8 rounded-full bg-white/15 grid place-items-center">👤</div>
+            <div>
+              <div class="text-sm font-semibold">ผู้ใช้งาน</div>
+              <div id="roleLabel" class="text-[11px] text-sky-200">-</div>
+            </div>
+          </div>
+          <nav class="px-2 py-3 space-y-1 text-sm">
+            <button id="sbListBtn"   class="w-full text-left flex items-center gap-2 px-3 py-2 rounded bg-white/15">📋 รายการลูกค้า</button>
+            <button id="sbReportBtn" class="w-full text-left flex items-center gap-2 px-3 py-2 rounded hover:bg-white/10">🔎 ค้นหา/สรุป</button>
+          </nav>
+          <div class="mt-auto px-4 py-3 text-[11px] text-sky-200/80">© 2025 YourBrand</div>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <main class="flex-1 w-full md:ml-0">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-6">
+
+          <!-- ===== LIST PAGE (เหมือนเดิม แต่สกินใหม่) ===== -->
+          <section id="pageList" class="bg-white rounded-xl shadow-sm border border-sky-100">
+            <div class="px-5 py-4 border-b border-sky-100 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">👥</span>
+                <h2 class="font-bold text-sky-900">รายการลูกค้า</h2>
+              </div>
+              <div class="flex items-center gap-2 text-sm">
+                <span class="text-slate-600">ทั้งหมด:</span>
+                <b id="total" class="text-sky-700">0</b>
+              </div>
+            </div>
+
+            <!-- ค้นหา -->
+            <div class="px-5 py-4 flex items-center gap-3 flex-wrap text-sm">
+              <input id="searchBox" type="search" class="border border-sky-200 rounded px-3 py-2 w-full md:w-80 focus:outline-none focus:ring-2 focus:ring-sky-300" placeholder="ค้นหาด้วยชื่อ/เบอร์/สถานะ/ห้อง …">
+            </div>
+
+            <!-- รายการการ์ด (ผลลัพธ์ตามตัวเลือก/ค้นหา) -->
+            <div id="cardList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-5 pb-5"></div>
+          </section>
+
+          <!-- ===== REPORT PAGE (สรุปตัวเลขตามตัวเลือก) ===== -->
+          <section id="pageReport" class="hidden bg-white rounded-xl shadow-sm border border-sky-100 mt-6">
+            <div class="px-5 py-4 border-b border-sky-100 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🔎</span>
+                <h2 class="font-bold text-sky-900">ค้นหา & สรุปผล (ไม่มีกลาฟ)</h2>
+              </div>
+              <div class="text-sm text-slate-600">รายการทั้งหมด: <b id="countAll" class="text-sky-700">0</b></div>
+            </div>
+
+            <div class="px-5 py-5 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div><label class="text-xs text-slate-500">วันที่เริ่ม</label><input id="fStart" type="date" class="w-full border rounded-lg px-3 py-2"></div>
+              <div><label class="text-xs text-slate-500">วันที่สิ้นสุด</label><input id="fEnd" type="date" class="w-full border rounded-lg px-3 py-2"></div>
+              <div><label class="text-xs text-slate-500">สถานะ</label><select id="fStatus" class="w-full border rounded-lg px-3 py-2">
+                <option value="">ทั้งหมด</option>
+                <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+                <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+                <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
+              </select></div>
+              <div><label class="text-xs text-slate-500">ประเภทห้อง</label><select id="fRoom" class="w-full border rounded-lg px-3 py-2">
+                <option value="">ทั้งหมด</option>
+                <option>ห้องเดี่ยว</option><option>ห้องรวมชาย</option><option>ห้องรวมหญิง</option>
+                <option>ห้องรวม 2 ท่าน</option><option>ห้องรวม 3 ท่าน</option>
+                <option>ห้องรวม 5 ท่าน</option><option>ห้องพิเศษ</option>
+              </select></div>
+              <div><label class="text-xs text-slate-500">เพศ</label><select id="fGender" class="w-full border rounded-lg px-3 py-2"><option value="">ทั้งหมด</option><option>ชาย</option><option>หญิง</option></select></div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-xs text-slate-500">ราคา ≥</label><input id="fMin" type="number" class="w-full border rounded-lg px-3 py-2"></div>
+                <div><label class="text-xs text-slate-500">ราคา ≤</label><input id="fMax" type="number" class="w-full border rounded-lg px-3 py-2"></div>
+              </div>
+            </div>
+
+            <div class="px-5 pb-5 flex flex-wrap items-center gap-2">
+              <button id="btnApply" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-sm">ใช้ตัวกรอง</button>
+              <button id="btnReset" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
+              <span class="ml-auto text-sm text-slate-600">ผลลัพธ์: <b id="countFiltered" class="text-sky-700">0</b> รายการ</span>
+            </div>
+
+            <!-- KPI -->
+            <div class="px-5 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div class="bg-sky-50 border border-sky-100 rounded-xl p-4"><div class="text-xs text-slate-500">Leads ทั้งหมด</div><div class="text-2xl font-bold" id="kAll">0</div></div>
+              <div class="bg-sky-50 border border-sky-100 rounded-xl p-4"><div class="text-xs text-slate-500">ช่วงที่เลือก</div><div class="text-2xl font-bold" id="kPeriod">0</div></div>
+              <div class="bg-sky-50 border border-sky-100 rounded-xl p-4"><div class="text-xs text-slate-500">ปิดการขาย</div><div class="text-2xl font-bold" id="kWon">0</div></div>
+              <div class="bg-sky-50 border border-sky-100 rounded-xl p-4"><div class="text-xs text-slate-500">Win Rate</div><div class="text-2xl font-bold" id="kWinRate">0%</div></div>
+              <div class="bg-sky-50 border border-sky-100 rounded-xl p-4"><div class="text-xs text-slate-500">Avg. Price</div><div class="text-2xl font-bold" id="kAvgPrice">฿0</div></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ===== Modal แก้สถานะ (เดิม) ===== -->
+  <template id="statusModalTpl">
+    <div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-5">
+        <h3 class="text-lg font-bold mb-3">แก้ไขสถานะลูกค้า</h3>
+        <select id="modalStatus" class="w-full border rounded-lg px-3 py-2 mb-4">
+          <option>ใหม่</option><option>หาข้อมูลเปรียบเทียบ</option><option>ยังไม่ใช้บริการตอนนี้</option>
+          <option>รอตัดสินใจ</option><option>รอทางการแพทย์</option><option>รอดูสถานที่</option>
+          <option>ดูสถานที่แล้วรอตัดสินใจ</option><option>ปิดการขายสำเร็จ</option><option>ยกเลิกการขาย</option>
+        </select>
+        <div class="flex gap-2">
+          <button id="okBtn" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white rounded-lg py-2.5">บันทึก</button>
+          <button id="cancelBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg py-2.5">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ========== SCRIPT (ฟังก์ชันเดิมทั้งหมด ไม่เปลี่ยน logic) ========== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
+    import {
+      getFirestore, collection, onSnapshot, query, orderBy,
+      deleteDoc, doc, updateDoc, getDoc, serverTimestamp, deleteField
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { firebaseConfig } from "./firebaseConfig.js";
+
+    // ---- Init
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    await setPersistence(auth, browserLocalPersistence);
+
+    // ---- Refs
+    const loginScreen = document.getElementById("loginScreen");
+    const dashboard   = document.getElementById("dashboard");
+    const loginError  = document.getElementById("loginError");
+    const roleLabelEl = document.getElementById("roleLabel");
+    const userBadge   = document.getElementById("userBadge");
+
+    const pageList   = document.getElementById("pageList");
+    const pageReport = document.getElementById("pageReport");
+    const tabList    = document.getElementById("tabList");
+    const tabReport  = document.getElementById("tabReport");
+    const sbListBtn  = document.getElementById("sbListBtn");
+    const sbReportBtn= document.getElementById("sbReportBtn");
+
+    const totalEl    = document.getElementById("total");
+    const cardList   = document.getElementById("cardList");
+    const searchBox  = document.getElementById("searchBox");
+
+    // Report refs
+    const fStart = document.getElementById('fStart');
+    const fEnd   = document.getElementById('fEnd');
+    const fStatus= document.getElementById('fStatus');
+    const fRoom  = document.getElementById('fRoom');
+    const fGender= document.getElementById('fGender');
+    const fMin   = document.getElementById('fMin');  const fMax = document.getElementById('fMax');
+    const btnApply = document.getElementById('btnApply'); const btnReset = document.getElementById('btnReset');
+    const countAllEl = document.getElementById('countAll'); const countFilteredEl = document.getElementById('countFiltered');
+    const kAll = document.getElementById('kAll'); const kPeriod = document.getElementById('kPeriod');
+    const kWon = document.getElementById('kWon'); const kWinRate = document.getElementById('kWinRate'); const kAvgPrice = document.getElementById('kAvgPrice');
+
+    // ---- Utils
+    const fmtTH=(s)=>{ const d=new Date(s); return isNaN(d)?'-':d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) };
+    const fmtNum=(n)=> new Intl.NumberFormat('th-TH').format(n||0);
+    const escapeHtml=(s)=>(s??'').toString().replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    function getDateFromDoc(c){ if (c.createdAt?.toDate) return c.createdAt.toDate(); if (c.date){ const d=new Date(c.date+'T00:00:00'); if(!isNaN(d)) return d; } return null; }
+
+    // ---- Auth submit
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      loginError.classList.add("hidden"); loginError.textContent = "";
+      try {
+        await signInWithEmailAndPassword(auth, email.value, password.value);
+      } catch (err) {
+        const map = {
+          "auth/operation-not-allowed": "ยังไม่ได้เปิด Email/Password ใน Authentication > Sign-in method",
+          "auth/invalid-api-key": "firebaseConfig ผิด โปรดตรวจสอบ apiKey / project",
+          "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
+          "auth/user-not-found": "ไม่พบบัญชีผู้ใช้",
+          "auth/wrong-password": "รหัสผ่านไม่ถูกต้อง",
+          "auth/network-request-failed": "ปัญหาเครือข่าย/อย่าเปิดไฟล์แบบ file:// ให้รันผ่าน localhost",
+        };
+        loginError.textContent = "เข้าสู่ระบบไม่สำเร็จ: " + (map[err.code] || `${err.code} — ${err.message}`);
+        loginError.classList.remove("hidden");
+      }
     });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    // ---- Auth state + roles
+    let isAdmin=false, isStaff=false;
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { dashboard.classList.add("hidden"); loginScreen.classList.remove("hidden"); return; }
+      try {
+        const roleDoc = await getDoc(doc(db, 'roles', user.uid));
+        const role = roleDoc.exists() ? (roleDoc.data().role || 'viewer') : 'viewer';
+        isAdmin = role === "admin"; isStaff = role === "staff";
+        roleLabelEl.textContent = role;
+        userBadge.textContent = `${user.email || user.uid} (${role})`;
+
+        if (!(isAdmin || isStaff)) {
+          loginError.textContent = "ล็อกอินสำเร็จ แต่ยังไม่มีสิทธิ์เข้าหลังบ้าน — ตั้ง roles/{uid}.role เป็น admin หรือ staff";
+          loginError.classList.remove("hidden");
+          dashboard.classList.add("hidden"); loginScreen.classList.remove("hidden"); return;
+        }
+        loginScreen.classList.add("hidden"); dashboard.classList.remove("hidden");
+
+        setTab('list');
+        loadCustomers();
+      } catch (e) { alert('อ่านสิทธิ์ไม่สำเร็จ: '+e.message); await signOut(auth); }
+    });
+
+    // ---- Tabs
+    function setTab(t){
+      const on=(el,yes)=>{ el.classList.toggle('tab-on', yes); el.classList.toggle('border-transparent', !yes); }
+      pageList.classList.toggle('hidden', t!=='list'); pageReport.classList.toggle('hidden', t!=='report');
+      on(tabList, t==='list'); on(tabReport, t==='report');
+    }
+    tabList.addEventListener('click', ()=>setTab('list')); tabReport.addEventListener('click', ()=>setTab('report'));
+    sbListBtn.addEventListener('click', ()=>{ setTab('list'); highlightSB('list'); toggleSidebar(false); });
+    sbReportBtn.addEventListener('click', ()=>{ setTab('report'); highlightSB('report'); toggleSidebar(false); });
+
+    function highlightSB(x){
+      sbListBtn.classList.toggle('bg-white/15', x==='list'); sbListBtn.classList.toggle('hover:bg-white/10', x!=='list');
+      sbReportBtn.classList.toggle('bg-white/15', x==='report'); sbReportBtn.classList.toggle('hover:bg-white/10', x!=='report');
+    }
+    const btnMenu=document.getElementById('btnMenu'), sidebar=document.getElementById('sidebar');
+    function toggleSidebar(show){ sidebar.classList.toggle('-translate-x-full', show===false ? true : show===true ? false : sidebar.classList.contains('-translate-x-full') ); }
+    btnMenu?.addEventListener('click', ()=>toggleSidebar());
+
+    // ---- Data
+    let allItems = []; let viewItems = [];
+    function loadCustomers(){
+      const qy = query(collection(db,"customers"), orderBy("createdAt","desc"));
+      onSnapshot(qy, (snap)=>{
+        allItems = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        countAllEl.textContent = allItems.length;
+        renderList(allItems);
+        ensureDefaultDateRange(); applyFilters();
+      });
+    }
+
+    // ---- Render: list cards + search
+    function card(c,i){
+      const canDelete = isAdmin;
+      return `<div class="border border-sky-100 rounded-2xl shadow-sm p-4 hover:shadow transition bg-white">
+        <div class="flex items-start justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-sky-100 text-sky-700 grid place-items-center font-bold">${(c.name||'?').substring(0,1)}</div>
+            <div>
+              <div class="font-semibold text-slate-800">${escapeHtml(c.name||'-')}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(c.phone||'-')}</div>
+            </div>
+          </div>
+          <span class="text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-2 py-0.5">${escapeHtml(c.decision||'-')}</span>
+        </div>
+        <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <div><span class="text-slate-500">วันที่:</span> ${fmtTH(c.date)}</div>
+          <div><span class="text-slate-500">เพศ/อายุ:</span> ${escapeHtml(c.gender||'-')} / ${escapeHtml(c.age||'-')} ปี</div>
+          <div><span class="text-slate-500">ห้อง:</span> ${escapeHtml(c.roomType||'-')}</div>
+          <div><span class="text-slate-500">ราคา:</span> ฿${fmtNum(c.price)}</div>
+        </div>
+        <div class="mt-3 text-xs text-slate-500 line-clamp-2"><b>ดูแลพิเศษ:</b> ${escapeHtml(c.specialCare||'-')}</div>
+        <div class="mt-4 flex items-center justify-between">
+          <button class="text-sky-700 hover:text-sky-900 underline" onclick="editStatus('${c.id}','${(c.decision||'').replace(/'/g,'&#39;')}')">แก้สถานะ</button>
+          ${canDelete ? `<button class="text-rose-600 hover:text-rose-700 underline" onclick="deleteCustomer('${c.id}')">ลบ</button>` : `<span class="text-slate-400 text-xs">เฉพาะ admin ลบได้</span>`}
+        </div>
+      </div>`;
+    }
+
+    function renderList(items){
+      totalEl.textContent = items.length;
+      if (!items.length){ cardList.innerHTML = `<div class="p-8 text-center text-slate-500 w-full">ยังไม่มีข้อมูล</div>`; return; }
+      cardList.innerHTML = items.map(card).join('');
+      viewItems = items;
+    }
+
+    function matches(c, q){
+      if (!q) return true; q = q.toLowerCase();
+      return [c.name,c.phone,c.gender,c.roomType,c.decision].some(v => (v||'').toLowerCase().includes(q));
+    }
+    searchBox.addEventListener('input', ()=> {
+      const q = searchBox.value.trim();
+      renderList(allItems.filter(c => matches(c,q)));
+    });
+
+    // ---- Actions
+    window.deleteCustomer = async (id)=>{
+      if (!isAdmin) return alert("อนุญาตเฉพาะผู้ดูแลระบบ");
+      if (confirm("ยืนยันการลบข้อมูลลูกค้ารายการนี้?")) await deleteDoc(doc(db,"customers",id));
+    };
+    window.editStatus = (id, currentStatus)=>{
+      const tpl = document.getElementById('statusModalTpl').content.cloneNode(true);
+      const modal = tpl.querySelector('[class*="fixed"]');
+      const select = tpl.querySelector('#modalStatus'); select.value = currentStatus || 'รอตัดสินใจ';
+      tpl.querySelector('#okBtn').addEventListener('click', async ()=>{
+        const newStatus = select.value;
+        const ref = doc(db,'customers',id);
+        if (newStatus === 'ปิดการขายสำเร็จ'){
+          await updateDoc(ref, { decision: newStatus, closedAt: serverTimestamp() });
+        } else {
+          await updateDoc(ref, { decision: newStatus, closedAt: deleteField() });
+        }
+        document.body.removeChild(modal);
+      });
+      tpl.querySelector('#cancelBtn').addEventListener('click', ()=> document.body.removeChild(modal));
+      document.body.appendChild(modal);
+    };
+
+    // ---- Report (ตัวเลขจากตัวเลือก ไม่มีกราฟ)
+    function ensureDefaultDateRange(){
+      if (!fStart.value || !fEnd.value){
+        const today = new Date();
+        const start = new Date(); start.setDate(today.getDate() - 90);
+        fStart.value = start.toISOString().slice(0,10);
+        fEnd.value   = today.toISOString().slice(0,10);
+      }
+    }
+    function applyFilters(){
+      const min = fMin.value ? Number(fMin.value) : -Infinity;
+      const max = fMax.value ? Number(fMax.value) : Infinity;
+      const status = fStatus.value, room = fRoom.value, gender = fGender.value;
+      const start = fStart.value ? new Date(fStart.value + 'T00:00:00') : null;
+      const end   = fEnd.value   ? new Date(fEnd.value   + 'T23:59:59') : null;
+
+      const filtered = allItems.filter(c=>{
+        const dt = getDateFromDoc(c);
+        if (start && dt && dt < start) return false;
+        if (end && dt && dt > end) return false;
+        if (status && (c.decision||'') !== status) return false;
+        if (room && (c.roomType||'') !== room) return false;
+        if (gender && (c.gender||'') !== gender) return false;
+        const price = Number(c.price||0); if (price < min || price > max) return false;
+        return true;
+      });
+
+      countAllEl.textContent = allItems.length;
+      document.getElementById('countFiltered').textContent = filtered.length;
+
+      kAll.textContent = allItems.length;
+      kPeriod.textContent = filtered.length;
+      const won = filtered.filter(c=> (c.decision||'')==='ปิดการขายสำเร็จ').length;
+      kWon.textContent = won;
+      kWinRate.textContent = filtered.length ? ( (won/filtered.length*100).toFixed(1)+'%' ) : '0%';
+      const avg = filtered.length ? Math.round(filtered.reduce((a,c)=>a+Number(c.price||0),0)/filtered.length) : 0;
+      kAvgPrice.textContent = '฿'+fmtNum(avg);
+    }
+    document.getElementById('btnApply').addEventListener('click', applyFilters);
+    document.getElementById('btnReset').addEventListener('click', ()=>{ fStatus.value=''; fRoom.value=''; fGender.value=''; fMin.value=''; fMax.value=''; ensureDefaultDateRange(); applyFilters(); });
+
+    // เปิดหน้าเริ่มต้น
+    function initTabs(){ setTab('list'); highlightSB('list'); }
+    initTabs();
   </script>
 </body>
 </html>
